@@ -1,8 +1,9 @@
 export const supportedLocales = ["zh-TW", "en"] as const;
 export type Locale = (typeof supportedLocales)[number];
 
-type DictionaryValue = string | Record<string, DictionaryValue>;
-export type Dictionary = Record<string, DictionaryValue>;
+export interface Dictionary {
+  [key: string]: string | Dictionary;
+}
 
 export const dictionaries: Record<Locale, Dictionary> = {
   "zh-TW": {
@@ -114,7 +115,7 @@ export function translate(locale?: string | null) {
   const dictionary = getDictionary(locale);
 
   return (key: string) => {
-    const value = key.split(".").reduce<DictionaryValue | undefined>(
+    const value = key.split(".").reduce<string | Dictionary | undefined>(
       (current, segment) => {
         if (!current || typeof current === "string") {
           return undefined;
