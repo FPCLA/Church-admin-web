@@ -83,48 +83,109 @@ Migration 會建立：
 
 ## 建立第一個 Admin
 
-系統不開放自由註冊。請先在 Supabase Auth Dashboard 手動建立第一個使用者，再複製該使用者的 `auth.users.id`。
+系統不開放自由註冊。請先在 Supabase Auth Dashboard 手動建立第一個使用者：
 
-接著在 SQL Editor 執行：
+1. 到 Supabase -> Authentication -> Users。
+2. 點 Add user。
+3. 建立 admin email/password。
+4. Email Confirm 建議設為已確認。
+
+密碼只存在 Supabase Auth，不要放進 SQL、GitHub、README 或聊天紀錄。
+
+接著在 Supabase SQL Editor 執行下方 SQL。請只替換：
+
+- `admin@example.com`：改成剛剛建立的 admin email。
+- `Admin Name`：改成管理員姓名。
+
+RLS 要保持 enabled，不需要關閉。
 
 ```sql
-insert into public.profiles (
-  id,
-  full_name,
-  email,
-  active,
-  approved,
-  approved_at,
-  language_preference
+with admin_user as (
+  select id, email
+  from auth.users
+  where lower(email) = lower('admin@example.com')
+  limit 1
+),
+ensure_profile as (
+  insert into public.profiles (
+    id,
+    full_name,
+    email,
+    active,
+    approved,
+    language_preference,
+    approved_at,
+    created_at,
+    updated_at
+  )
+  select
+    id,
+    'Admin Name',
+    email,
+    true,
+    true,
+    'zh-TW',
+    now(),
+    now(),
+    now()
+  from admin_user
+  on conflict (id) do update set
+    full_name = excluded.full_name,
+    email = excluded.email,
+    active = true,
+    approved = true,
+    approved_at = now(),
+    updated_at = now()
+  returning id
 )
-values (
-  'AUTH_USER_UUID_HERE',
-  'Admin Name',
-  'admin@example.com',
-  true,
-  true,
-  now(),
-  'zh-TW'
-);
-
 insert into public.user_roles (
   user_id,
   role_id,
   active,
   start_date,
-  assigned_at
+  assigned_by,
+  assigned_at,
+  created_at,
+  updated_at
 )
 select
-  'AUTH_USER_UUID_HERE',
-  id,
+  ensure_profile.id,
+  roles.id,
   true,
   current_date,
+  ensure_profile.id,
+  now(),
+  now(),
   now()
-from public.roles
-where name = 'admin';
+from ensure_profile
+join public.roles on roles.name = 'admin'
+where not exists (
+  select 1
+  from public.user_roles ur
+  where ur.user_id = ensure_profile.id
+    and ur.role_id = roles.id
+);
 ```
 
-請把 `AUTH_USER_UUID_HERE`、姓名與 email 換成實際資料。
+如果執行後沒有新增任何資料，請確認 Supabase Authentication -> Users 裡已經有該 email，且 email 拼字完全一致。
+
+可用下方 SQL 檢查 admin 是否建立成功：
+
+```sql
+select
+  p.id,
+  p.email,
+  p.full_name,
+  p.active,
+  p.approved,
+  r.name as role_name
+from public.profiles p
+left join public.user_roles ur on ur.user_id = p.id
+left join public.roles r on r.id = ur.role_id
+where lower(p.email) = lower('admin@example.com');
+```
+
+檢查結果應該看到 `active = true`、`approved = true`、`role_name = admin`。
 
 ## 登入規則
 
