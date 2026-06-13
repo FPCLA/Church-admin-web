@@ -1,5 +1,6 @@
 import "server-only";
 
+import { adminModules } from "@/lib/admin/constants";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export type PermissionAction =
@@ -64,7 +65,25 @@ export class PermissionError extends Error {
 export async function resolveEffectivePermissions(
   userId: string,
   moduleName: string,
-): Promise<PermissionSet> {
+): Promise<PermissionSet>;
+export async function resolveEffectivePermissions(
+  userId: string,
+): Promise<Record<string, PermissionSet>>;
+export async function resolveEffectivePermissions(
+  userId: string,
+  moduleName?: string,
+): Promise<PermissionSet | Record<string, PermissionSet>> {
+  if (!moduleName) {
+    const entries = await Promise.all(
+      adminModules.map(async (name) => [name, await resolveModulePermissions(userId, name)]),
+    );
+    return Object.fromEntries(entries);
+  }
+
+  return resolveModulePermissions(userId, moduleName);
+}
+
+async function resolveModulePermissions(userId: string, moduleName: string): Promise<PermissionSet> {
   const admin = getSupabaseAdminClient();
   const { data: profile } = await admin
     .from("profiles")
@@ -91,15 +110,7 @@ export async function resolveEffectivePermissions(
   });
 
   if (activeRoles.some((role) => role.roles?.name === "admin")) {
-    return {
-      preview: true,
-      create: true,
-      edit: true,
-      delete: true,
-      export: true,
-      import: true,
-      manage: true,
-    };
+    return { preview: true, create: true, edit: true, delete: true, export: true, import: true, manage: true };
   }
 
   const roleIds = activeRoles.map((role) => role.role_id);
@@ -108,9 +119,7 @@ export async function resolveEffectivePermissions(
   if (roleIds.length > 0) {
     const { data: rolePermissions } = await admin
       .from("permissions")
-      .select(
-        "can_preview, can_create, can_edit, can_delete, can_export, can_import, can_manage",
-      )
+      .select("can_preview, can_create, can_edit, can_delete, can_export, can_import, can_manage")
       .in("role_id", roleIds)
       .in("module_name", [moduleName, "all"])
       .returns<PermissionRow[]>();
@@ -122,9 +131,7 @@ export async function resolveEffectivePermissions(
 
   const { data: override } = await admin
     .from("user_permission_overrides")
-    .select(
-      "can_preview, can_create, can_edit, can_delete, can_export, can_import, can_manage",
-    )
+    .select("can_preview, can_create, can_edit, can_delete, can_export, can_import, can_manage")
     .eq("user_id", userId)
     .eq("module_name", moduleName)
     .maybeSingle<PermissionRow>();
@@ -136,25 +143,14 @@ export async function resolveEffectivePermissions(
   return permissions;
 }
 
-export async function hasPermission(
-  userId: string,
-  moduleName: string,
-  action: PermissionAction,
-) {
+export async function hasPermission(userId: string, moduleName: string, action: PermissionAction) {
   const permissions = await resolveEffectivePermissions(userId, moduleName);
   return permissions[action];
 }
 
-export async function requirePermission(
-  userId: string,
-  moduleName: string,
-  action: PermissionAction,
-) {
+export async function requirePermission(userId: string, moduleName: string, action: PermissionAction) {
   const allowed = await hasPermission(userId, moduleName, action);
-
-  if (!allowed) {
-    throw new PermissionError(moduleName, action);
-  }
+  if (!allowed) throw new PermissionError(moduleName, action);
 }
 
 export async function hasRecordPermission(
@@ -163,9 +159,7 @@ export async function hasRecordPermission(
   recordId: string,
   action: Extract<PermissionAction, "preview" | "edit" | "manage">,
 ) {
-  if (await hasPermission(userId, moduleName, action)) {
-    return true;
-  }
+  if (await hasPermission(userId, moduleName, action)) return true;
 
   const column = permissionColumns[action];
   const admin = getSupabaseAdminClient();
@@ -191,10 +185,7 @@ export async function requireRecordPermission(
   action: Extract<PermissionAction, "preview" | "edit" | "manage">,
 ) {
   const allowed = await hasRecordPermission(userId, moduleName, recordId, action);
-
-  if (!allowed) {
-    throw new PermissionError(moduleName, action);
-  }
+  if (!allowed) throw new PermissionError(moduleName, action);
 }
 
 function mergePermissionRow(target: PermissionSet, row: PermissionRow) {
@@ -206,8 +197,6 @@ function mergePermissionRow(target: PermissionSet, row: PermissionRow) {
 function applyOverride(target: PermissionSet, row: PermissionRow) {
   for (const action of Object.keys(permissionColumns) as PermissionAction[]) {
     const value = row[permissionColumns[action]];
-    if (value !== null && value !== undefined) {
-      target[action] = value;
-    }
+    if (value !== null && value !== undefined) target[action] = value;
   }
 }
