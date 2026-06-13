@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { signInWithPassword, type LoginActionState } from "@/app/actions/auth";
 import { useTranslation } from "@/lib/i18n/useTranslation";
@@ -36,12 +37,17 @@ export function LoginForm({
         />
       </div>
       <div className="space-y-2">
-        <label
-          className="block text-sm font-medium text-slate-700"
-          htmlFor="password"
-        >
-          {t("common.password")}
-        </label>
+        <div className="flex items-center justify-between gap-3">
+          <label
+            className="block text-sm font-medium text-slate-700"
+            htmlFor="password"
+          >
+            {t("common.password")}
+          </label>
+          <Link className="text-sm text-sky-700" href="/forgot-password">
+            {t("login.forgotPassword")}
+          </Link>
+        </div>
         <input
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 shadow-sm outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
           id="password"
