@@ -12,3 +12,7 @@ export function getSupabaseServiceRoleEnv() {
 
   return { url, serviceRoleKey };
 }
+
+export function getAppUrl() {
+  return process.env.APP_URL || "http://localhost:3000";
+}
