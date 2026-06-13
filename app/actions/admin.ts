@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { randomUUID } from "node:crypto";
 import { parsePermissionForm } from "@/lib/admin/queries";
 import { requireAdminPagePermission } from "@/lib/admin/access";
 import { logChange } from "@/lib/change-logs/logChange";
+import { getAppUrl } from "@/lib/env.server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type ProfileRecord = {
@@ -39,21 +39,32 @@ export async function createCoworker(formData: FormData) {
     (authUser) => authUser.email?.toLowerCase() === email,
   );
   let authUserId = existingUser?.id;
+  let inviteSent = false;
+
+  const passwordRedirectTo = `${getAppUrl()}/auth/callback?next=/set-password`;
 
   if (!authUserId) {
-    const password = `${randomUUID()}Aa1!`;
-    const { data: authData, error: authError } = await admin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { full_name: fullName },
+    const { data: authData, error: authError } = await admin.auth.admin.inviteUserByEmail(email, {
+      data: { full_name: fullName },
+      redirectTo: passwordRedirectTo,
     });
 
     if (authError || !authData.user) {
-      redirect("/admin/users?status=auth_user_failed");
+      redirect("/admin/users?status=invite_failed");
     }
 
     authUserId = authData.user.id;
+    inviteSent = true;
+  } else {
+    const { error: inviteError } = await admin.auth.resetPasswordForEmail(email, {
+      redirectTo: passwordRedirectTo,
+    });
+
+    if (inviteError) {
+      redirect("/admin/users?status=invite_failed");
+    }
+
+    inviteSent = true;
   }
 
   const now = new Date().toISOString();
@@ -79,7 +90,7 @@ export async function createCoworker(formData: FormData) {
     tableName: "profiles",
     recordId: authUserId,
     action: "user_created",
-    newData: profile,
+    newData: { ...profile, invite_sent: inviteSent },
     changedBy: user.id,
   });
 
@@ -100,7 +111,7 @@ export async function createCoworker(formData: FormData) {
   }
 
   revalidatePath("/admin/users");
-  redirect("/admin/users?status=saved");
+  redirect(`/admin/users?status=${inviteSent ? "invited" : "saved"}`);
 }
 
 export async function updateUserProfile(formData: FormData) {
@@ -128,6 +139,40 @@ export async function updateUserProfile(formData: FormData) {
 
   revalidatePath("/admin/users");
   redirect("/admin/users?status=saved");
+}
+
+export async function sendPasswordSetupEmail(formData: FormData) {
+  const { user } = await requireAdminPagePermission("user_management", "manage");
+  const profileId = String(formData.get("profile_id") || "");
+  const admin = getSupabaseAdminClient();
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("id, email")
+    .eq("id", profileId)
+    .maybeSingle<{ id: string; email: string | null }>();
+
+  if (!profile?.email) {
+    redirect("/admin/users?status=missing_email");
+  }
+
+  const { error } = await admin.auth.resetPasswordForEmail(profile.email, {
+    redirectTo: `${getAppUrl()}/auth/callback?next=/set-password`,
+  });
+
+  if (error) {
+    redirect("/admin/users?status=invite_failed");
+  }
+
+  await logChange({
+    tableName: "profiles",
+    recordId: profile.id,
+    action: "password_setup_email_sent",
+    newData: { email: profile.email },
+    changedBy: user.id,
+  });
+
+  revalidatePath("/admin/users");
+  redirect("/admin/users?status=invited");
 }
 
 export async function approveUser(formData: FormData) {
