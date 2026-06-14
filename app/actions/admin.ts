@@ -133,7 +133,7 @@ export async function createCoworker(formData: FormData) {
   });
 
   revalidatePath("/admin/users");
-  redirect(`/admin/users?status=${inviteSent ? "invited" : "email_failed"}`);
+  redirect(`/admin/users?status=${inviteSent ? "invited" : "saved"}`);
 }
 
 export async function updateUserProfile(formData: FormData) {
