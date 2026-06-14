@@ -94,7 +94,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         </section>
 
         <section className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-          <table className="min-w-[1100px] w-full border-collapse text-sm">
+          <table className="w-full min-w-[1100px] border-collapse text-sm">
             <thead className="bg-slate-100 text-left text-slate-700">
               <tr>
                 <th className="p-3">{t("admin.users.fullName")}</th>
@@ -134,24 +134,28 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
                     <td className="p-3">{person.email}</td>
                     <td className="space-y-2 p-3">
                       {activeRoles.length === 0 && <p className="text-slate-500">{t("common.none")}</p>}
-                      {activeRoles.map((row) => (
-                        <form key={row.id} action={removeRole} className="flex items-center gap-2">
-                          <input name="user_role_id" type="hidden" value={row.id} />
-                          <span>
-                            {roleById[row.role_id]?.display_name_zh || row.role_id}
-                            {row.end_date ? ` (${row.end_date})` : ""}
-                          </span>
-                          <button className="rounded border border-rose-200 px-2 py-1 text-rose-700">
-                            {t("admin.users.removeRole")}
-                          </button>
-                        </form>
-                      ))}
+                      {activeRoles.map((row) => {
+                        const role = roleById[row.role_id];
+                        return (
+                          <form key={row.id} action={removeRole} className="flex items-center gap-2">
+                            <input name="user_role_id" type="hidden" value={row.id} />
+                            <span>
+                              {role ? `${role.display_name_zh} / ${role.display_name_en}` : row.role_id}
+                              {row.end_date ? ` (${row.end_date})` : ""}
+                            </span>
+                            <button className="rounded border border-rose-200 px-2 py-1 text-rose-700">
+                              {t("admin.users.removeRole")}
+                            </button>
+                          </form>
+                        );
+                      })}
                       <form action={assignRole} className="grid gap-2">
                         <input name="user_id" type="hidden" value={person.id} />
                         <select className="rounded border border-slate-300 px-2 py-1" name="role_id" required>
+                          <option value="">{t("admin.users.assignRole")}</option>
                           {roles.map((role) => (
                             <option key={role.id} value={role.id}>
-                              {role.display_name_zh}
+                              {role.display_name_zh} / {role.display_name_en}
                             </option>
                           ))}
                         </select>
@@ -250,14 +254,29 @@ function StatusMessage({
     return null;
   }
 
-  const ok = status === "saved" || status === "invited";
+  const ok = status === "saved" || status === "invited" || status === "email_failed";
+  const message =
+    status === "invited"
+      ? t("admin.users.inviteSent")
+      : status === "email_failed"
+        ? "同工資料已儲存，但設定密碼信暫時寄送失敗。請稍後在同工列表按『重寄設定密碼信』。 / Coworker was saved, but the password setup email failed. Please resend it later from the user list."
+        : status === "missing_email"
+          ? "請輸入 Email。 / Please enter an email."
+          : status === "user_create_failed"
+            ? "登入帳號建立失敗，請確認 Email 或稍後再試。 / Login account creation failed. Check the email or try again later."
+            : status === "profile_failed"
+              ? "同工資料建立失敗，請稍後再試。 / Coworker profile creation failed. Try again later."
+              : status === "role_failed"
+                ? "角色指派失敗，請確認同工與角色都存在，或稍後再試。 / Role assignment failed. Check that the coworker and role exist, or try again later."
+                : status === "role_missing"
+                  ? "請先選擇同工與角色。 / Please select both a coworker and a role."
+                  : ok
+                    ? t("common.updateSucceeded")
+                    : t("common.updateFailed");
+
   return (
     <div className={`rounded-lg border p-4 ${ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-rose-200 bg-rose-50 text-rose-800"}`}>
-      {status === "invited"
-        ? t("admin.users.inviteSent")
-        : ok
-          ? t("common.updateSucceeded")
-          : t("common.updateFailed")}
+      {message}
     </div>
   );
 }
