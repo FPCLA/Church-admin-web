@@ -36,6 +36,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       title: "登入",
       subtitle: "請使用管理者建立的帳號登入。",
       forgotPassword: "忘記密碼？",
+      firstLoginOrForgotPassword: "第一次登入 / 忘記密碼？",
       noRegistration: "系統不開放自行註冊；角色與權限由管理員指派。",
       errors: {
         required: "請輸入 Email 和密碼。",
@@ -58,6 +59,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
         required: "請輸入 Email。",
         sendFailed: "設定密碼信寄送失敗，請稍後再試或聯絡管理員。",
       },
+    },
+    resetPassword: {
+      title: "第一次登入 / 重設密碼",
+      subtitle: "第一次登入或忘記密碼時，請輸入帳號 Email，系統會寄出設定新密碼的連結。",
     },
     setPassword: {
       title: "設定密碼",
@@ -112,6 +117,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
       permissions: {
         title: "權限管理",
         allow: "特別允許",
+        bulkActions: "快速設定",
+        clearAll: "全取消",
         create: "可新增",
         delete: "可刪除",
         deny: "特別拒絕",
@@ -123,6 +130,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         module: "模組",
         permissions: "權限",
         preview: "可預覽",
+        selectAll: "全選",
         recordAssignments: "單筆資料權限",
         roleDefaults: "角色預設權限",
         userOverrides: "使用者權限覆寫",
@@ -189,6 +197,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       title: "Sign in",
       subtitle: "Use the account created by an administrator.",
       forgotPassword: "Forgot password?",
+      firstLoginOrForgotPassword: "First sign-in / Forgot password?",
       noRegistration:
         "Self-registration is disabled. Roles and permissions are assigned by administrators.",
       errors: {
@@ -220,6 +229,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
         sendFailed:
           "Password setup email failed to send. Try again later or contact an administrator.",
       },
+    },
+    resetPassword: {
+      title: "First sign-in / Reset password",
+      subtitle:
+        "For first sign-in or a forgotten password, enter your account email and the system will send a link to set a new password.",
     },
     setPassword: {
       title: "Set password",
@@ -278,6 +292,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
       permissions: {
         title: "Permission Management",
         allow: "Special allow",
+        bulkActions: "Quick actions",
+        clearAll: "Clear all",
         create: "Can create",
         delete: "Can delete",
         deny: "Special deny",
@@ -289,6 +305,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         module: "Module",
         permissions: "Permissions",
         preview: "Can preview",
+        selectAll: "Select all",
         recordAssignments: "Record assignments",
         roleDefaults: "Role default permissions",
         userOverrides: "User permission overrides",
