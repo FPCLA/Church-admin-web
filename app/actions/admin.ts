@@ -213,10 +213,27 @@ export async function assignRole(formData: FormData) {
   const { user } = await requireAdminPagePermission("user_management", "manage");
   const userId = String(formData.get("user_id") || "");
   const roleId = String(formData.get("role_id") || "");
-  const startDate = String(formData.get("start_date") || "") || null;
+  const startDate = String(formData.get("start_date") || "") || new Date().toISOString().slice(0, 10);
   const endDate = String(formData.get("end_date") || "") || null;
 
+  if (!userId || !roleId) {
+    redirect("/admin/users?status=role_missing");
+  }
+
   const admin = getSupabaseAdminClient();
+  const { data: existingRole, error: existingRoleError } = await admin
+    .from("user_roles")
+    .select("id, active, start_date, end_date")
+    .eq("user_id", userId)
+    .eq("role_id", roleId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ id: string; active: boolean; start_date: string | null; end_date: string | null }>();
+
+  if (existingRoleError) {
+    redirect("/admin/users?status=role_failed");
+  }
+
   const row = {
     user_id: userId,
     role_id: roleId,
@@ -227,11 +244,29 @@ export async function assignRole(formData: FormData) {
     assigned_at: new Date().toISOString(),
   };
 
-  const { data } = await admin.from("user_roles").insert(row).select("id").single<{ id: string }>();
+  const { data, error } = existingRole
+    ? await admin
+        .from("user_roles")
+        .update({
+          active: true,
+          start_date: startDate,
+          end_date: endDate,
+          assigned_by: user.id,
+          assigned_at: row.assigned_at,
+        })
+        .eq("id", existingRole.id)
+        .select("id")
+        .single<{ id: string }>()
+    : await admin.from("user_roles").insert(row).select("id").single<{ id: string }>();
+
+  if (error) {
+    redirect("/admin/users?status=role_failed");
+  }
+
   await logChange({
     tableName: "user_roles",
     recordId: data?.id || userId,
-    action: "role_assigned",
+    action: existingRole ? "role_updated" : "role_assigned",
     newData: row,
     changedBy: user.id,
   });
