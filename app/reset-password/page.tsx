@@ -1,10 +1,12 @@
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ForgotPasswordForm } from "@/components/ForgotPasswordForm";
 import { SetPasswordForm } from "@/components/SetPasswordForm";
 import { getCurrentUserAndProfile } from "@/lib/auth";
 
 export default async function ResetPasswordPage() {
   const { user, profile } = await getCurrentUserAndProfile();
   const locale = profile?.language_preference || user?.user_metadata?.locale || "zh-TW";
+  const canSetPassword = Boolean(user);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
@@ -15,17 +17,32 @@ export default async function ResetPasswordPage() {
               FPCLA 教會行政管理
             </p>
             <h1 className="mt-2 text-2xl font-semibold text-slate-950">
-              設定新密碼 / Set new password
+              {canSetPassword ? "設定新密碼 / Set new password" : "第一次登入 / 忘記密碼"}
             </h1>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              請輸入新密碼與確認密碼，完成後即可使用新密碼登入。
-              <br />
-              Enter and confirm your new password. You can sign in with it afterward.
+              {canSetPassword ? (
+                <>
+                  請輸入新密碼與確認密碼，完成後即可使用新密碼登入。
+                  <br />
+                  Enter and confirm your new password. You can sign in with it afterward.
+                </>
+              ) : (
+                <>
+                  第一次登入或忘記密碼時，請先輸入帳號 Email，系統會寄出密碼重設信。
+                  <br />
+                  First sign-in or forgot password? Enter your account email to receive a
+                  password reset email.
+                </>
+              )}
             </p>
           </div>
           <LanguageSwitcher initialLocale={locale} />
         </div>
-        <SetPasswordForm initialLocale={locale} />
+        {canSetPassword ? (
+          <SetPasswordForm initialLocale={locale} />
+        ) : (
+          <ForgotPasswordForm initialLocale={locale} />
+        )}
       </section>
     </main>
   );
