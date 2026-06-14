@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { parsePermissionForm } from "@/lib/admin/queries";
@@ -39,32 +40,23 @@ export async function createCoworker(formData: FormData) {
     (authUser) => authUser.email?.toLowerCase() === email,
   );
   let authUserId = existingUser?.id;
-  let inviteSent = false;
 
   const passwordRedirectTo = `${getAppUrl()}/auth/callback?next=/reset-password`;
 
   if (!authUserId) {
-    const { data: authData, error: authError } = await admin.auth.admin.inviteUserByEmail(email, {
-      data: { full_name: fullName },
-      redirectTo: passwordRedirectTo,
+    const temporaryPassword = `FPCLA-${randomUUID()}-Temp!9`;
+    const { data: authData, error: authError } = await admin.auth.admin.createUser({
+      email,
+      password: temporaryPassword,
+      email_confirm: true,
+      user_metadata: { full_name: fullName },
     });
 
     if (authError || !authData.user) {
-      redirect("/admin/users?status=invite_failed");
+      redirect("/admin/users?status=user_create_failed");
     }
 
     authUserId = authData.user.id;
-    inviteSent = true;
-  } else {
-    const { error: inviteError } = await admin.auth.resetPasswordForEmail(email, {
-      redirectTo: passwordRedirectTo,
-    });
-
-    if (inviteError) {
-      redirect("/admin/users?status=invite_failed");
-    }
-
-    inviteSent = true;
   }
 
   const now = new Date().toISOString();
@@ -90,28 +82,58 @@ export async function createCoworker(formData: FormData) {
     tableName: "profiles",
     recordId: authUserId,
     action: "user_created",
-    newData: { ...profile, invite_sent: inviteSent },
+    newData: profile,
     changedBy: user.id,
   });
 
   if (roleId) {
-    await admin.from("user_roles").insert({
-      user_id: authUserId,
-      role_id: roleId,
-      active: true,
-      assigned_by: user.id,
-    });
-    await logChange({
-      tableName: "user_roles",
-      recordId: authUserId,
-      action: "role_assigned",
-      newData: { user_id: authUserId, role_id: roleId },
-      changedBy: user.id,
-    });
+    const { data: existingRole } = await admin
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", authUserId)
+      .eq("role_id", roleId)
+      .eq("active", true)
+      .limit(1)
+      .maybeSingle<{ id: string }>();
+
+    if (!existingRole) {
+      const { error: roleError } = await admin.from("user_roles").insert({
+        user_id: authUserId,
+        role_id: roleId,
+        active: true,
+        assigned_by: user.id,
+      });
+
+      if (roleError) {
+        redirect("/admin/users?status=role_failed");
+      }
+
+      await logChange({
+        tableName: "user_roles",
+        recordId: authUserId,
+        action: "role_assigned",
+        newData: { user_id: authUserId, role_id: roleId },
+        changedBy: user.id,
+      });
+    }
   }
 
+  const { error: inviteError } = await admin.auth.resetPasswordForEmail(email, {
+    redirectTo: passwordRedirectTo,
+  });
+
+  const inviteSent = !inviteError;
+
+  await logChange({
+    tableName: "profiles",
+    recordId: authUserId,
+    action: inviteSent ? "password_setup_email_sent" : "password_setup_email_failed",
+    newData: { email, error: inviteError?.message },
+    changedBy: user.id,
+  });
+
   revalidatePath("/admin/users");
-  redirect(`/admin/users?status=${inviteSent ? "invited" : "saved"}`);
+  redirect(`/admin/users?status=${inviteSent ? "invited" : "email_failed"}`);
 }
 
 export async function updateUserProfile(formData: FormData) {
@@ -160,7 +182,7 @@ export async function sendPasswordSetupEmail(formData: FormData) {
   });
 
   if (error) {
-    redirect("/admin/users?status=invite_failed");
+    redirect("/admin/users?status=email_failed");
   }
 
   await logChange({
