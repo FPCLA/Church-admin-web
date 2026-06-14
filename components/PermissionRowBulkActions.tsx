@@ -1,55 +1,93 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 type PermissionRowBulkActionsProps = {
   mode: "checkbox" | "triState";
   selectLabel: string;
-  clearLabel: string;
+  clearLabel?: string;
 };
 
 export function PermissionRowBulkActions({
   mode,
   selectLabel,
-  clearLabel,
 }: PermissionRowBulkActionsProps) {
-  function updateRow(button: HTMLButtonElement, selected: boolean) {
-    const row = button.closest("tr");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function getRowControls() {
+    const row = inputRef.current?.closest("tr");
 
     if (!row) {
+      return [];
+    }
+
+    return Array.from(
+      row.querySelectorAll<HTMLInputElement | HTMLSelectElement>(
+        "[data-permission-control]",
+      ),
+    );
+  }
+
+  function syncState() {
+    const input = inputRef.current;
+    const controls = getRowControls();
+
+    if (!input || controls.length === 0) {
       return;
     }
 
     if (mode === "checkbox") {
-      row
-        .querySelectorAll<HTMLInputElement>("input[data-permission-control]")
-        .forEach((input) => {
-          input.checked = selected;
-        });
+      const checkboxes = controls.filter(
+        (control): control is HTMLInputElement => control instanceof HTMLInputElement,
+      );
+      const checkedCount = checkboxes.filter((control) => control.checked).length;
+      input.checked = checkedCount === checkboxes.length;
+      input.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
       return;
     }
 
-    row
-      .querySelectorAll<HTMLSelectElement>("select[data-permission-control]")
-      .forEach((select) => {
-        select.value = selected ? "allow" : "inherit";
-      });
+    const selects = controls.filter(
+      (control): control is HTMLSelectElement => control instanceof HTMLSelectElement,
+    );
+    const allowCount = selects.filter((control) => control.value === "allow").length;
+    input.checked = allowCount === selects.length;
+    input.indeterminate = allowCount > 0 && allowCount < selects.length;
   }
 
+  function updateRow(selected: boolean) {
+    getRowControls().forEach((control) => {
+      if (control instanceof HTMLInputElement) {
+        control.checked = selected;
+      } else {
+        control.value = selected ? "allow" : "inherit";
+      }
+    });
+    syncState();
+  }
+
+  useEffect(() => {
+    const controls = getRowControls();
+    controls.forEach((control) => {
+      control.addEventListener("change", syncState);
+    });
+    syncState();
+
+    return () => {
+      controls.forEach((control) => {
+        control.removeEventListener("change", syncState);
+      });
+    };
+  });
+
   return (
-    <div className="flex min-w-28 flex-wrap gap-2">
-      <button
-        className="rounded border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-medium text-sky-800 hover:bg-sky-100"
-        onClick={(event) => updateRow(event.currentTarget, true)}
-        type="button"
-      >
-        {selectLabel}
-      </button>
-      <button
-        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
-        onClick={(event) => updateRow(event.currentTarget, false)}
-        type="button"
-      >
-        {clearLabel}
-      </button>
-    </div>
+    <label className="inline-flex items-center gap-2 rounded border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-medium text-sky-800">
+      <input
+        ref={inputRef}
+        className="h-4 w-4"
+        onChange={(event) => updateRow(event.currentTarget.checked)}
+        type="checkbox"
+      />
+      <span>{selectLabel}</span>
+    </label>
   );
 }
