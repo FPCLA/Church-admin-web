@@ -44,8 +44,10 @@ export function LoginForm({
           >
             {t("common.password")}
           </label>
-          <Link className="text-sm text-sky-700" href="/forgot-password">
-            {t("login.forgotPassword")}
+          <Link className="text-sm text-sky-700" href="/reset-password">
+            {initialLocale === "en"
+              ? "First sign-in / Forgot password?"
+              : "第一次登入 / 忘記密碼？"}
           </Link>
         </div>
         <input
