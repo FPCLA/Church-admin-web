@@ -229,13 +229,21 @@ function PermissionMatrix({
                 {t(`admin.permissions.${action}`)}
               </th>
             ))}
-            <th className="p-2">{t("admin.permissions.bulkActions")}</th>
           </tr>
         </thead>
         <tbody>
           {adminModules.map((moduleName) => (
             <tr key={moduleName} className="border-t border-slate-200">
-              <td className="p-2 font-medium">{moduleName}</td>
+              <td className="p-2">
+                <div className="flex min-w-52 flex-wrap items-center gap-3">
+                  <span className="font-medium">{moduleName}</span>
+                  <PermissionRowBulkActions
+                    clearLabel={t("admin.permissions.clearAll")}
+                    mode={mode}
+                    selectLabel={t("admin.permissions.selectAll")}
+                  />
+                </div>
+              </td>
               {permissionActions.map((action) => (
                 <td key={action} className="p-2">
                   {mode === "checkbox" ? (
@@ -255,13 +263,6 @@ function PermissionMatrix({
                   )}
                 </td>
               ))}
-              <td className="p-2">
-                <PermissionRowBulkActions
-                  clearLabel={t("admin.permissions.clearAll")}
-                  mode={mode}
-                  selectLabel={t("admin.permissions.selectAll")}
-                />
-              </td>
             </tr>
           ))}
         </tbody>
