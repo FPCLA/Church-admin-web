@@ -41,7 +41,7 @@ export async function createCoworker(formData: FormData) {
   let authUserId = existingUser?.id;
   let inviteSent = false;
 
-  const passwordRedirectTo = `${getAppUrl()}/auth/callback?next=/set-password`;
+  const passwordRedirectTo = `${getAppUrl()}/auth/callback?next=/reset-password`;
 
   if (!authUserId) {
     const { data: authData, error: authError } = await admin.auth.admin.inviteUserByEmail(email, {
@@ -156,7 +156,7 @@ export async function sendPasswordSetupEmail(formData: FormData) {
   }
 
   const { error } = await admin.auth.resetPasswordForEmail(profile.email, {
-    redirectTo: `${getAppUrl()}/auth/callback?next=/set-password`,
+    redirectTo: `${getAppUrl()}/auth/callback?next=/reset-password`,
   });
 
   if (error) {
