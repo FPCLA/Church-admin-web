@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192" role="img" aria-label="FPCLA Admin">
+  <rect width="192" height="192" rx="36" fill="#0369a1"/>
+  <path d="M96 36v120M58 72h76" stroke="#ffffff" stroke-width="14" stroke-linecap="round"/>
+  <path d="M48 142h96" stroke="#bae6fd" stroke-width="12" stroke-linecap="round"/>
+  <text x="96" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#ffffff">FPCLA</text>
+</svg>
