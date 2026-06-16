@@ -38,3 +38,157 @@ a {
 :where(button:disabled, select:disabled, input:disabled) {
   cursor: not-allowed;
 }
+
+.calendar-builder-sheet {
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+  font-family:
+    "Microsoft JhengHei",
+    "PMingLiU",
+    Arial,
+    sans-serif;
+  margin: 0 auto;
+  max-width: 11in;
+  padding: 0.35in;
+}
+
+.calendar-builder-title {
+  border-bottom: 2px solid #1d4ed8;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  text-align: center;
+}
+
+.calendar-builder-title p {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin: 0 0 2px;
+}
+
+.calendar-builder-title h2 {
+  color: #0f172a;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0;
+  margin: 0;
+}
+
+.calendar-builder-holidays {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 12px;
+}
+
+.calendar-builder-holidays div {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 4px;
+  min-height: 48px;
+  padding: 6px 8px;
+}
+
+.calendar-builder-holidays span {
+  color: #1e3a8a;
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.calendar-builder-holidays strong {
+  color: #0f172a;
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.calendar-builder-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.calendar-builder-month {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.calendar-builder-month th,
+.calendar-builder-month td {
+  border: 1px solid #64748b;
+  font-size: 10.5px;
+  line-height: 1.25;
+  padding: 3px 4px;
+  vertical-align: middle;
+}
+
+.calendar-builder-month thead tr:first-child th {
+  background: #1d4ed8;
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.calendar-builder-month thead tr:nth-child(2) th {
+  background: #dbeafe;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.calendar-builder-month th:first-child,
+.calendar-builder-month td:first-child {
+  text-align: center;
+  width: 13%;
+}
+
+.calendar-builder-month th:nth-child(2),
+.calendar-builder-month td:nth-child(2) {
+  text-align: center;
+  width: 34%;
+}
+
+.calendar-builder-month th:nth-child(3),
+.calendar-builder-month td:nth-child(3) {
+  text-align: center;
+  width: 16%;
+}
+
+.calendar-builder-month th:nth-child(4),
+.calendar-builder-month td:nth-child(4) {
+  width: 37%;
+}
+
+@media (max-width: 900px) {
+  .calendar-builder-sheet {
+    padding: 16px;
+  }
+
+  .calendar-builder-holidays,
+  .calendar-builder-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .calendar-builder-sheet {
+    border: 0;
+    box-shadow: none;
+    max-width: none;
+    padding: 0.2in;
+  }
+
+  @page {
+    margin: 0.35in;
+    size: letter landscape;
+  }
+}

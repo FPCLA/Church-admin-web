@@ -14,6 +14,10 @@ Latest local backup archive:
 
 Included work:
 
+- Calendar Builder page at `/calendar/builder`.
+- Year selector for annual calendar generation.
+- Automatic Sunday, Thanksgiving, Christmas, Father's Day, and Mother's Day date generation.
+- Print-friendly FPCLA calendar table styling.
 - Phase 3 core module tables and RLS migration.
 - Phase 3 migration updated after Supabase SQL install feedback.
 - Calendar CRUD pages.

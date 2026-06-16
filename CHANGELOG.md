@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-06-16 - Calendar Builder
+
+- Added `/calendar/builder` for creating a print-style annual church calendar by year.
+- Auto-generates all Sundays for the selected year.
+- Auto-calculates Mother's Day, Father's Day, Thanksgiving, and Christmas.
+- Added a Calendar Builder entry on the Calendar module page.
+- Styled the builder with a print-friendly table layout inspired by the FPCLA 2026 calendar reference.
+
 ## 2026-06-15 - Phase 3 Core Modules
 
 - Added Supabase tables, triggers, RLS policies, and seed data for calendar events, Sunday school classes, speakers, speaker assignments, service roles, service assignments, and bulletins.
