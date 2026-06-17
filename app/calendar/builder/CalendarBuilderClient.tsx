@@ -584,7 +584,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
           </tbody>
         </table>
       </div>
-      <footer className="calendar-builder-footnote">* 代表聯合禮拜 (* denotes Joint Service)</footer>
+      <footer className="calendar-builder-footnote">「 * 」代表聯合禮拜 (「 * 」 denotes Joint Service)</footer>
     </section>
   );
 
@@ -681,7 +681,7 @@ function presetText(kind: PresetKind, isEnglish: boolean) {
 }
 
 function presetCalendarText(kind: PresetKind) {
-  return kind === "joint_service" ? "*" : "(聖餐禮 Holy Communion)";
+  return kind === "joint_service" ? "「 * 」" : "(聖餐禮 Holy Communion)";
 }
 
 function isPresetItem(item: CustomCalendarItem, kind: PresetKind) {
@@ -689,6 +689,7 @@ function isPresetItem(item: CustomCalendarItem, kind: PresetKind) {
     item.kind === kind ||
     item.text === presetText(kind, true) ||
     item.text === presetText(kind, false) ||
+    (kind === "joint_service" && item.text === "*") ||
     item.text === presetCalendarText(kind)
   );
 }
@@ -897,6 +898,9 @@ function buildPreviewHtml({
     th:nth-child(3), td:nth-child(3), th:nth-child(4), td:nth-child(4) {
       width: 36%;
     }
+    th:nth-child(4), td:nth-child(4) {
+      text-align: right;
+    }
     .cell-lines {
       display: grid;
       gap: 4px;
@@ -927,12 +931,12 @@ function buildPreviewHtml({
           <th>${isEnglish ? "Month" : "月"}</th>
           <th>${isEnglish ? "Sunday" : "主日"}</th>
           <th>${isEnglish ? "Church calendar" : "教會行事"}</th>
-          <th>${isEnglish ? "Special dates / holidays" : "特殊日子 / 節日"}</th>
+          <th aria-label="${isEnglish ? "Special dates and holidays" : "特殊日子與節日"}"></th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
-    <footer class="footnote">* 代表聯合禮拜 (* denotes Joint Service)</footer>
+    <footer class="footnote">「 * 」代表聯合禮拜 (「 * 」 denotes Joint Service)</footer>
   </main>
 </body>
 </html>`;
