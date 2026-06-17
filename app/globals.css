@@ -54,6 +54,51 @@ a {
   padding: 0.45in 0.55in;
 }
 
+.calendar-builder-toolbar {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  display: grid;
+  font-family: Arial, "Microsoft JhengHei", sans-serif;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 10px;
+}
+
+.calendar-builder-bulk-panel,
+.calendar-builder-save-panel {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.calendar-builder-bulk-panel strong,
+.calendar-builder-save-panel span,
+.calendar-builder-toolbar p {
+  color: #334155;
+  font-size: 12px;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.calendar-builder-bulk-panel button,
+.calendar-builder-save-panel button {
+  background: white;
+  border: 1px solid #94a3b8;
+  border-radius: 4px;
+  color: #0f172a;
+  font-size: 12px;
+  line-height: 1;
+  min-height: 28px;
+  padding: 6px 8px;
+}
+
+.calendar-builder-bulk-panel button:hover,
+.calendar-builder-save-panel button:hover {
+  border-color: #2563eb;
+}
+
 .calendar-builder-title {
   border-bottom: 2px dashed #111827;
   margin-bottom: 12px;
@@ -154,6 +199,23 @@ a {
   width: 100%;
 }
 
+.calendar-builder-date-select {
+  align-items: center;
+  display: inline-flex;
+  font-family: Arial, "Microsoft JhengHei", sans-serif;
+  font-size: 11px;
+  gap: 3px;
+  justify-content: center;
+  margin-bottom: 3px;
+  width: 100%;
+}
+
+.calendar-builder-date-select input {
+  height: 14px;
+  margin: 0;
+  width: 14px;
+}
+
 .calendar-builder-sunday-date button:hover,
 .calendar-builder-note-cell > button:hover {
   background: #eff6ff;
@@ -238,8 +300,24 @@ a {
   border-color: #2563eb;
 }
 
+.calendar-builder-special-actions button[aria-pressed="true"] {
+  background: #dbeafe;
+  border-color: #2563eb;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
 .calendar-builder-special-actions button:disabled {
   opacity: 0.45;
+}
+
+.calendar-builder-own-special-row td {
+  background: #fff7ed;
+}
+
+.calendar-builder-special-date-label {
+  color: #9a3412;
+  font-weight: 700;
 }
 
 .calendar-builder-confirmation {
