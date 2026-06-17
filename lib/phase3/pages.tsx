@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { BulletinEditor } from "@/components/phase3/BulletinEditor";
+import { CalendarHistoryPreview } from "@/app/calendar/CalendarHistoryPreview";
 import { Phase3Form } from "@/components/phase3/Phase3Form";
 import { Phase3Layout, Phase3Nav } from "@/components/phase3/Phase3Layout";
 import { Phase3List } from "@/components/phase3/Phase3List";
@@ -74,13 +75,17 @@ export async function ModuleListPage({
           </div>
         </section>
       )}
-      <Phase3List
-        config={config}
-        locale={profile.language_preference}
-        lookup={lookup}
-        permissions={permissions}
-        rows={rows}
-      />
+      {moduleName === "calendar_events" ? (
+        <CalendarHistoryPreview isEnglish={profile.language_preference === "en"} />
+      ) : (
+        <Phase3List
+          config={config}
+          locale={profile.language_preference}
+          lookup={lookup}
+          permissions={permissions}
+          rows={rows}
+        />
+      )}
     </Phase3Layout>
   );
 }

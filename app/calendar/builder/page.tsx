@@ -52,7 +52,7 @@ export default async function CalendarBuilderPage({ searchParams }: PageProps) {
         </div>
       </section>
 
-      <CalendarBuilderClient annualCalendar={annualCalendar} isEnglish={isEnglish} />
+      <CalendarBuilderClient annualCalendar={annualCalendar} isEnglish={isEnglish} key={selectedYear} />
     </Phase3Layout>
   );
 }

@@ -255,6 +255,11 @@ a {
   margin-top: 12px;
 }
 
+.calendar-builder-read-only th:nth-child(4),
+.calendar-builder-read-only td:nth-child(4) {
+  text-align: right;
+}
+
 .calendar-builder-sunday-date button:hover,
 .calendar-builder-note-cell > button:hover {
   background: #eff6ff;

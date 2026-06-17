@@ -12,6 +12,7 @@ type AnnualCalendar = {
 type CalendarBuilderClientProps = {
   annualCalendar: AnnualCalendar;
   isEnglish: boolean;
+  readOnly?: boolean;
 };
 
 type SpecialPlacement = string | null;
@@ -46,13 +47,14 @@ const ownRowPlacement = "__own_row__";
 const weekdayZh = ["日", "一", "二", "三", "四", "五", "六"];
 const weekdayEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBuilderClientProps) {
+export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = false }: CalendarBuilderClientProps) {
   const [activeDate, setActiveDate] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<DraftState>({});
   const [customItems, setCustomItems] = useState<CustomCalendarItem[]>([]);
   const [placements, setPlacements] = useState<PlacementState>(() => initialPlacements(annualCalendar));
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>("");
+  const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const editorRef = useRef<HTMLDivElement | null>(null);
   const customItemsStorageKey = `calendar-builder-custom-items-${annualCalendar.year}`;
   const placementStorageKey = `calendar-builder-placements-${annualCalendar.year}`;
@@ -64,18 +66,27 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
       setCustomItems(readStorage<CustomCalendarItem[]>(customItemsStorageKey, []));
       setPlacements(readStorage<PlacementState>(placementStorageKey, initialPlacements(annualCalendar)));
       setSavedAt(window.localStorage.getItem(saveTimeStorageKey(annualCalendar.year)));
+      setIsStorageLoaded(true);
     }, 0);
 
     return () => window.clearTimeout(timeout);
   }, [annualCalendar, customItemsStorageKey, placementStorageKey]);
 
   useEffect(() => {
+    if (!isStorageLoaded) {
+      return;
+    }
+
     window.localStorage.setItem(customItemsStorageKey, JSON.stringify(customItems));
-  }, [customItemsStorageKey, customItems]);
+  }, [customItemsStorageKey, customItems, isStorageLoaded]);
 
   useEffect(() => {
+    if (!isStorageLoaded) {
+      return;
+    }
+
     window.localStorage.setItem(placementStorageKey, JSON.stringify(placements));
-  }, [placementStorageKey, placements]);
+  }, [isStorageLoaded, placementStorageKey, placements]);
 
   useEffect(() => {
     function closeDateMenus(event: MouseEvent | TouchEvent) {
@@ -375,8 +386,10 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
   }
 
   return (
-    <section className="calendar-builder-sheet bg-white text-slate-950">
-      <div className="calendar-builder-toolbar print:hidden">
+    <section
+      className={`calendar-builder-sheet bg-white text-slate-950${readOnly ? " calendar-builder-read-only" : ""}`}
+    >
+      {!readOnly ? <div className="calendar-builder-toolbar print:hidden">
         <div className="calendar-builder-save-panel">
           <button onClick={saveCalendar} type="button">
             {isEnglish ? "Save" : "儲存"}
@@ -395,7 +408,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
           </span>
         </div>
         {statusMessage ? <p>{statusMessage}</p> : null}
-      </div>
+      </div> : null}
 
       <header className="calendar-builder-title">
         <h2>
@@ -412,7 +425,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
               <th>{isEnglish ? "Month" : "月"}</th>
               <th>{isEnglish ? "Sunday" : "主日"}</th>
               <th>{isEnglish ? "Church calendar" : "教會行事"}</th>
-              <th>{isEnglish ? "Special dates / holidays" : "特殊日子 / 節日"}</th>
+              <th>{readOnly ? "" : isEnglish ? "Special dates / holidays" : "特殊日子 / 節日"}</th>
             </tr>
           </thead>
           <tbody>
@@ -438,14 +451,14 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
 
               const sunday = row.sunday;
               const rowSpecialDates = specialDatesBySunday.get(sunday.date) || [];
-              const isEditing = activeDate === sunday.date;
+              const isEditing = !readOnly && activeDate === sunday.date;
 
               return (
                 <tr
                   className={isEditing ? "is-editing" : ""}
                   key={sunday.date}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDrop={(event) => {
+                  onDragOver={readOnly ? undefined : (event) => event.preventDefault()}
+                  onDrop={readOnly ? undefined : (event) => {
                     const itemId = event.dataTransfer.getData("text/calendar-custom-item");
                     if (itemId) {
                       moveCustomItem(itemId, sunday.date);
@@ -456,7 +469,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
                     {isFirstMonthRow ? monthLabel(sunday.month, isEnglish) : ""}
                   </td>
                   <td className="calendar-builder-sunday-date">
-                    <details className="calendar-builder-date-menu print:hidden">
+                    {!readOnly ? <details className="calendar-builder-date-menu print:hidden">
                       <summary>{isEnglish ? "Service options" : "聖餐／聯合禮拜"}</summary>
                       <div className="calendar-builder-date-menu-options">
                         {(["communion", "joint_service"] as const).map((kind) => (
@@ -470,25 +483,34 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
                           </label>
                         ))}
                       </div>
-                    </details>
-                    <button type="button" onClick={() => setActiveDate(sunday.date)}>
-                      {formatSundayDay(sunday.date, isEnglish)}
-                    </button>
+                    </details> : null}
+                    {readOnly ? (
+                      <span>{formatSundayDay(sunday.date, isEnglish)}</span>
+                    ) : (
+                      <button type="button" onClick={() => setActiveDate(sunday.date)}>
+                        {formatSundayDay(sunday.date, isEnglish)}
+                      </button>
+                    )}
                   </td>
-                  <td className="calendar-builder-note-cell" onClick={() => setActiveDate(sunday.date)}>
+                  <td
+                    className="calendar-builder-note-cell"
+                    onClick={readOnly ? undefined : () => setActiveDate(sunday.date)}
+                  >
                     <div className="calendar-builder-custom-items">
                       {(customItemsBySunday.get(sunday.date) || []).map((item) => (
                         <div className="calendar-builder-custom-item" key={item.id}>
-                          <button
-                            draggable
+                          {readOnly ? (
+                            <span>{calendarItemText(item)}</span>
+                          ) : <button
+                            draggable={!readOnly}
                             onDragStart={(event) => {
                               event.dataTransfer.setData("text/calendar-custom-item", item.id);
                             }}
                             type="button"
                           >
                             {calendarItemText(item)}
-                          </button>
-                          <span className="calendar-builder-special-actions print:hidden">
+                          </button>}
+                          {!readOnly ? <span className="calendar-builder-special-actions print:hidden">
                             <button
                               onClick={(event) => {
                                 event.stopPropagation();
@@ -528,7 +550,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
                             >
                               {isEnglish ? "Delete" : "刪除"}
                             </button>
-                          </span>
+                          </span> : null}
                         </div>
                       ))}
                     </div>
@@ -567,11 +589,11 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
                           </button>
                         </div>
                       </div>
-                    ) : (
+                    ) : !readOnly ? (
                       <button type="button">
                         {isEnglish ? "Add item" : "新增內容"}
                       </button>
-                    )}
+                    ) : null}
                   </td>
                   <td className="calendar-builder-special-cell">
                     {rowSpecialDates.map((specialDate) =>
@@ -597,7 +619,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
     return (
       <div className="calendar-builder-special-item" key={specialDate.key}>
         <span>{formatSpecialDateLabel(specialDate, placedSundayDate, isEnglish)}</span>
-        <span className="calendar-builder-special-actions print:hidden">
+        {!readOnly ? <span className="calendar-builder-special-actions print:hidden">
           {isNonSunday ? (
             <button
               aria-pressed={placedOnOwnRow}
@@ -629,7 +651,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
           >
             {isEnglish ? "Next" : "後週"}
           </button>
-        </span>
+        </span> : null}
       </div>
     );
   }
