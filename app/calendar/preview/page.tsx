@@ -1,6 +1,5 @@
 import { CalendarBuilderClient } from "../builder/CalendarBuilderClient";
 import { Phase3Layout, Phase3Nav } from "@/components/phase3/Phase3Layout";
-import { PrintButton } from "@/components/phase3/PrintButton";
 import { buildAnnualCalendar } from "@/lib/phase3/calendar-builder";
 import { phase3Text } from "@/lib/phase3/config";
 import { requireModuleContext } from "@/lib/phase3/data";
@@ -25,9 +24,6 @@ export default async function CalendarPreviewPage({ searchParams }: PageProps) {
         backLabel={p3.text("back")}
         locale={profile.language_preference}
       />
-      <div className="flex justify-end print:hidden">
-        <PrintButton label={isEnglish ? "Print" : "列印"} />
-      </div>
       <CalendarBuilderClient
         annualCalendar={annualCalendar}
         isEnglish={isEnglish}

@@ -385,6 +385,27 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
     previewWindow.focus();
   }
 
+  if (readOnly) {
+    if (!isStorageLoaded) {
+      return <p className="text-sm text-slate-500">{isEnglish ? "Loading calendar..." : "載入行事曆中..."}</p>;
+    }
+
+    return (
+      <iframe
+        className="calendar-builder-preview-frame"
+        srcDoc={buildPreviewHtml({
+          annualCalendar,
+          customItemsBySunday,
+          displayRows,
+          isEnglish,
+          placements,
+          specialDatesBySunday,
+        })}
+        title={`${annualCalendar.year} ${isEnglish ? "calendar preview" : "行事曆預覽"}`}
+      />
+    );
+  }
+
   return (
     <section
       className={`calendar-builder-sheet bg-white text-slate-950${readOnly ? " calendar-builder-read-only" : ""}`}
@@ -606,7 +627,10 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
           </tbody>
         </table>
       </div>
-      <footer className="calendar-builder-footnote">「 * 」代表聯合禮拜 (「 * 」 denotes Joint Service)</footer>
+      <footer className="calendar-builder-footnote">
+        <div>「 * 」 代表聯合禮拜</div>
+        <div>「 * 」 denotes Joint Service</div>
+      </footer>
     </section>
   );
 
@@ -815,27 +839,58 @@ function buildPreviewHtml({
   placements: PlacementState;
   specialDatesBySunday: Map<string, CalendarSpecialDate[]>;
 }) {
-  const rows = displayRows
-    .map((row, index) => {
-      const showMonth = index === 0 || displayRows[index - 1]?.month !== row.month;
-      const month = showMonth ? monthLabel(row.month, isEnglish) : "";
+  const pageRows = [
+    displayRows.filter((row) => row.month <= 6),
+    displayRows.filter((row) => row.month >= 7),
+  ].map((rowsForPage) =>
+    rowsForPage
+      .map((row, index) => {
+        const showMonth = index === 0 || rowsForPage[index - 1]?.month !== row.month;
+        const month = showMonth ? monthLabel(row.month, isEnglish) : "";
 
-      if (row.type === "special") {
-        return tableRow([
-          month,
-          formatSpecialDateDate(row.specialDate.date, isEnglish),
-          "",
-          formatSpecialDateLabel(row.specialDate, placements[row.specialDate.key] || null, isEnglish),
-        ]);
-      }
+        if (row.type === "special") {
+          return tableRow([
+            month,
+            formatSpecialDateDate(row.specialDate.date, isEnglish),
+            "",
+            formatSpecialDateLabel(row.specialDate, placements[row.specialDate.key] || null, isEnglish),
+          ]);
+        }
 
-      const customItems = (customItemsBySunday.get(row.sunday.date) || []).map(calendarItemText);
-      const specialItems = (specialDatesBySunday.get(row.sunday.date) || []).map((specialDate) =>
-        formatSpecialDateLabel(specialDate, placements[specialDate.key] || null, isEnglish),
-      );
+        const customItems = (customItemsBySunday.get(row.sunday.date) || []).map(calendarItemText);
+        const specialItems = (specialDatesBySunday.get(row.sunday.date) || []).map((specialDate) =>
+          formatSpecialDateLabel(specialDate, placements[specialDate.key] || null, isEnglish),
+        );
 
-      return tableRow([month, formatSundayDay(row.sunday.date, isEnglish), customItems, specialItems]);
-    })
+        return tableRow([month, formatSundayDay(row.sunday.date, isEnglish), customItems, specialItems]);
+      })
+      .join(""),
+  );
+
+  const pages = pageRows
+    .map(
+      (rows) => `<main class="sheet">
+    <header class="title">
+      <h1>${annualCalendar.year} ${isEnglish ? "FPCLA Calendar" : "年洛杉磯台灣基督長老教會行事曆"} <span>FPCLA Calendar</span></h1>
+      <p>${isEnglish ? "Theme:" : "主題："}</p>
+    </header>
+    <table>
+      <thead>
+        <tr>
+          <th>${isEnglish ? "Month" : "月"}</th>
+          <th>${isEnglish ? "Sunday" : "主日"}</th>
+          <th>${isEnglish ? "Church calendar" : "教會行事"}</th>
+          <th aria-label="${isEnglish ? "Special dates and holidays" : "特殊日子與節日"}"></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <footer class="footnote">
+      <div>「 * 」 代表聯合禮拜</div>
+      <div>「 * 」 denotes Joint Service</div>
+    </footer>
+  </main>`,
+    )
     .join("");
 
   return `<!doctype html>
@@ -871,9 +926,12 @@ function buildPreviewHtml({
       background: white;
       border: 1px solid #cbd5e1;
       border-radius: 4px;
+      display: flex;
+      flex-direction: column;
       font-family: "Times New Roman", "PMingLiU", Arial, sans-serif;
-      margin: 0 auto;
+      margin: 0 auto 24px;
       max-width: 8.5in;
+      min-height: 10in;
       padding: 0.45in 0.55in;
     }
     .title {
@@ -930,36 +988,23 @@ function buildPreviewHtml({
     .footnote {
       font-family: Arial, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
       font-size: 12px;
-      margin-top: 12px;
+      line-height: 1.5;
+      margin-top: auto;
+      padding-top: 12px;
+      text-align: center;
     }
     @media print {
       body { background: white; padding: 0; }
       .actions { display: none; }
-      .sheet { border: 0; max-width: none; padding: 0.2in; }
+      .sheet { border: 0; break-after: page; margin: 0; max-width: none; min-height: 10in; padding: 0.2in; }
+      .sheet:last-child { break-after: auto; }
       @page { margin: 0.35in; size: letter portrait; }
     }
   </style>
 </head>
 <body>
   <div class="actions"><button onclick="window.print()">${isEnglish ? "Print" : "列印"}</button></div>
-  <main class="sheet">
-    <header class="title">
-      <h1>${annualCalendar.year} ${isEnglish ? "FPCLA Calendar" : "年洛杉磯台灣基督長老教會行事曆"} <span>FPCLA Calendar</span></h1>
-      <p>${isEnglish ? "Theme:" : "主題："}</p>
-    </header>
-    <table>
-      <thead>
-        <tr>
-          <th>${isEnglish ? "Month" : "月"}</th>
-          <th>${isEnglish ? "Sunday" : "主日"}</th>
-          <th>${isEnglish ? "Church calendar" : "教會行事"}</th>
-          <th aria-label="${isEnglish ? "Special dates and holidays" : "特殊日子與節日"}"></th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <footer class="footnote">「 * 」代表聯合禮拜 (「 * 」 denotes Joint Service)</footer>
-  </main>
+  ${pages}
 </body>
 </html>`;
 }

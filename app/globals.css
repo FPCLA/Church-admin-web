@@ -253,6 +253,13 @@ a {
   font-family: Arial, "Microsoft JhengHei", sans-serif;
   font-size: 12px;
   margin-top: 12px;
+  text-align: center;
+}
+
+.calendar-builder-preview-frame {
+  border: 0;
+  min-height: 2200px;
+  width: 100%;
 }
 
 .calendar-builder-read-only th:nth-child(4),
