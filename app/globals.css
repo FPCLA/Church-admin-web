@@ -44,19 +44,20 @@ a {
   border-radius: 4px;
   box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
   font-family:
-    "Microsoft JhengHei",
+    "Times New Roman",
+    "PMingLiU",
     "PMingLiU",
     Arial,
     sans-serif;
   margin: 0 auto;
-  max-width: 11in;
-  padding: 0.35in;
+  max-width: 8.5in;
+  padding: 0.45in 0.55in;
 }
 
 .calendar-builder-title {
-  border-bottom: 2px solid #1d4ed8;
+  border-bottom: 2px dashed #111827;
   margin-bottom: 12px;
-  padding-bottom: 8px;
+  padding-bottom: 10px;
   text-align: center;
 }
 
@@ -70,10 +71,175 @@ a {
 
 .calendar-builder-title h2 {
   color: #0f172a;
-  font-size: 24px;
-  font-weight: 800;
+  font-size: 18px;
+  font-weight: 600;
   letter-spacing: 0;
-  margin: 0;
+  margin: 0 0 26px;
+}
+
+.calendar-builder-title h2 span {
+  margin-left: 14px;
+}
+
+.calendar-builder-linear-wrap {
+  overflow-x: auto;
+}
+
+.calendar-builder-linear {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.calendar-builder-linear th {
+  background: #f8fafc;
+  border-bottom: 2px solid #334155;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 6px;
+  text-align: left;
+}
+
+.calendar-builder-linear th:first-child,
+.calendar-builder-linear td:first-child {
+  text-align: center;
+  width: 14%;
+}
+
+.calendar-builder-linear th:nth-child(2),
+.calendar-builder-linear td:nth-child(2) {
+  text-align: center;
+  width: 14%;
+}
+
+.calendar-builder-linear th:nth-child(3),
+.calendar-builder-linear td:nth-child(3) {
+  width: 36%;
+}
+
+.calendar-builder-linear th:nth-child(4),
+.calendar-builder-linear td:nth-child(4) {
+  width: 36%;
+}
+
+.calendar-builder-linear td {
+  border-bottom: 1px solid #475569;
+  color: #0f172a;
+  font-size: 15px;
+  line-height: 1.25;
+  min-height: 34px;
+  padding: 5px 6px;
+  vertical-align: top;
+}
+
+.calendar-builder-linear tr.is-editing td {
+  background: #f8fafc;
+}
+
+.calendar-builder-month-label {
+  font-size: 16px;
+  white-space: pre;
+}
+
+.calendar-builder-sunday-date button,
+.calendar-builder-note-cell > button {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #0f172a;
+  font: inherit;
+  min-height: 28px;
+  padding: 2px 5px;
+  width: 100%;
+}
+
+.calendar-builder-sunday-date button:hover,
+.calendar-builder-note-cell > button:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.calendar-builder-note-cell {
+  min-width: 0;
+}
+
+.calendar-builder-custom-items,
+.calendar-builder-special-cell {
+  display: grid;
+  gap: 4px;
+}
+
+.calendar-builder-custom-item,
+.calendar-builder-special-item {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.calendar-builder-custom-item > button {
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+  border-radius: 4px;
+  color: #0f172a;
+  flex: 1 1 160px;
+  font: inherit;
+  min-height: 28px;
+  padding: 3px 6px;
+  text-align: left;
+}
+
+.calendar-builder-custom-item > button:hover {
+  background: #dbeafe;
+}
+
+.calendar-builder-note-editor {
+  display: grid;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.calendar-builder-note-editor textarea {
+  border: 1px solid #93c5fd;
+  border-radius: 4px;
+  font: inherit;
+  min-height: 58px;
+  padding: 6px;
+  resize: vertical;
+  width: 100%;
+}
+
+.calendar-builder-editor-actions,
+.calendar-builder-special-actions {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.calendar-builder-editor-actions button,
+.calendar-builder-special-actions button,
+.calendar-builder-special-actions select {
+  background: white;
+  border: 1px solid #94a3b8;
+  border-radius: 4px;
+  color: #0f172a;
+  font-family: Arial, "Microsoft JhengHei", sans-serif;
+  font-size: 11px;
+  line-height: 1;
+  min-height: 24px;
+  padding: 4px 6px;
+}
+
+.calendar-builder-special-actions button:hover,
+.calendar-builder-editor-actions button:hover,
+.calendar-builder-special-actions select:hover {
+  border-color: #2563eb;
+}
+
+.calendar-builder-special-actions button:disabled {
+  opacity: 0.45;
 }
 
 .calendar-builder-confirmation {
@@ -206,16 +372,8 @@ a {
     padding: 16px;
   }
 
-  .calendar-builder-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .calendar-builder-confirmation {
-    overflow-x: auto;
-  }
-
-  .calendar-builder-confirmation table {
-    min-width: 920px;
+  .calendar-builder-linear {
+    min-width: 760px;
   }
 }
 
@@ -231,8 +389,20 @@ a {
     padding: 0.2in;
   }
 
+  .calendar-builder-linear-wrap {
+    overflow: visible;
+  }
+
+  .calendar-builder-sunday-date button,
+  .calendar-builder-note-cell > button,
+  .calendar-builder-custom-item > button {
+    background: transparent;
+    border: 0;
+    padding: 0;
+  }
+
   @page {
     margin: 0.35in;
-    size: letter landscape;
+    size: letter portrait;
   }
 }

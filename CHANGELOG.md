@@ -7,6 +7,8 @@
 - Auto-calculates New Year's Day, Chinese New Year, LA Marathon known dates, Oscars known dates, Palm Sunday, Good Friday, Easter, Mother's Day, Memorial Day, Dragon Boat Festival, Father's Day, Independence Day, Labor Day, Mid-Autumn Festival, World Communion Day, Thanksgiving, Advent Sundays, and Christmas.
 - Shows a date confirmation table every time the calendar is built, including calculation method, Sunday-note placement, and confirmation status.
 - Places special dates into the Sunday table using church-calendar logic: same Sunday, previous Sunday, next Sunday, or nearest Sunday depending on the event.
+- Reworked the calendar builder into a 2026-reference style one-week-per-row layout.
+- Added clickable Sunday rows for entering church calendar items, with movable item controls for previous week, next week, direct Sunday selection, and drag/drop placement.
 - Added a Calendar Builder entry on the Calendar module page.
 - Styled the builder with a print-friendly table layout inspired by the FPCLA 2026 calendar reference.
 

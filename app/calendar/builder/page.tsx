@@ -1,6 +1,7 @@
+import { CalendarBuilderClient } from "./CalendarBuilderClient";
 import { Phase3Layout, Phase3Nav } from "@/components/phase3/Phase3Layout";
 import { PrintButton } from "@/components/phase3/PrintButton";
-import { buildAnnualCalendar, type CalendarDateStatus } from "@/lib/phase3/calendar-builder";
+import { buildAnnualCalendar } from "@/lib/phase3/calendar-builder";
 import { phase3Text } from "@/lib/phase3/config";
 import { requireModuleContext } from "@/lib/phase3/data";
 
@@ -51,74 +52,7 @@ export default async function CalendarBuilderPage({ searchParams }: PageProps) {
         </div>
       </section>
 
-      <section className="calendar-builder-sheet bg-white text-slate-950">
-        <header className="calendar-builder-title">
-          <p>First Presbyterian Church of Los Angeles</p>
-          <h2>
-            FPCLA {selectedYear} {isEnglish ? "Calendar" : "\u884c\u4e8b\u66c6"}
-          </h2>
-        </header>
-
-        <section className="calendar-builder-confirmation">
-          <div className="calendar-builder-section-title">
-            {isEnglish ? "Date confirmation" : "\u65e5\u671f\u78ba\u8a8d"}
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>{isEnglish ? "Item" : "\u9805\u76ee"}</th>
-                <th>{isEnglish ? "Date" : "\u65e5\u671f"}</th>
-                <th>{isEnglish ? "Day" : "\u661f\u671f"}</th>
-                <th>{isEnglish ? "Method / source" : "\u8a08\u7b97\u65b9\u5f0f / \u4f86\u6e90"}</th>
-                <th>{isEnglish ? "Sunday note" : "\u4e3b\u65e5\u5099\u8a3b\u4f4d\u7f6e"}</th>
-                <th>{isEnglish ? "Status" : "\u72c0\u614b"}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {annualCalendar.specialDates.map((date) => (
-                <tr key={date.key}>
-                  <td>{isEnglish ? date.labelEn : date.labelZh}</td>
-                  <td>{date.date || "TBD"}</td>
-                  <td>{isEnglish ? date.weekdayEn : date.weekdayZh}</td>
-                  <td>{isEnglish ? date.methodEn : date.methodZh}</td>
-                  <td>{isEnglish ? date.sundayPlacementEn : date.sundayPlacementZh}</td>
-                  <td>{statusLabel(date.status, isEnglish)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-
-        <div className="calendar-builder-grid">
-          {annualCalendar.months.map((month) => (
-            <table className="calendar-builder-month" key={month.month}>
-              <thead>
-                <tr>
-                  <th colSpan={4}>
-                    {month.month} {isEnglish ? "Month" : "\u6708"}
-                  </th>
-                </tr>
-                <tr>
-                  <th>{isEnglish ? "No." : "\u9031\u6b21"}</th>
-                  <th>{isEnglish ? "Date" : "\u65e5\u671f"}</th>
-                  <th>{isEnglish ? "Day" : "\u661f\u671f"}</th>
-                  <th>{isEnglish ? "Notes" : "\u7bc0\u671f / \u5099\u8a3b"}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {month.sundays.map((sunday) => (
-                  <tr key={sunday.date}>
-                    <td>{sunday.sequence}</td>
-                    <td>{sunday.date}</td>
-                    <td>{isEnglish ? "Sun" : "\u4e3b\u65e5"}</td>
-                    <td>{isEnglish ? sunday.noteEn : sunday.noteZh}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ))}
-        </div>
-      </section>
+      <CalendarBuilderClient annualCalendar={annualCalendar} isEnglish={isEnglish} />
     </Phase3Layout>
   );
 }
@@ -130,16 +64,4 @@ function normalizeYear(rawYear: string | undefined, fallback: number) {
   }
 
   return year;
-}
-
-function statusLabel(status: CalendarDateStatus, isEnglish: boolean) {
-  if (status === "needs_confirmation") {
-    return isEnglish ? "Confirm manually" : "\u9700\u4eba\u5de5\u78ba\u8a8d";
-  }
-
-  if (status === "known") {
-    return isEnglish ? "Known date" : "\u5df2\u77e5\u65e5\u671f";
-  }
-
-  return isEnglish ? "Calculated" : "\u81ea\u52d5\u8a08\u7b97";
 }
