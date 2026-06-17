@@ -60,16 +60,16 @@ export async function ModuleListPage({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold">
-                {profile.language_preference === "en" ? "Calendar Builder" : "行事曆製作"}
+                {profile.language_preference === "en" ? "New Annual Calendar" : "新建年度行事曆"}
               </h2>
               <p className="mt-1 text-sm text-slate-600">
                 {profile.language_preference === "en"
                   ? "Choose a year and auto-generate Sundays and major church calendar dates."
-                  : "選擇年份，自動產生全年主日、感恩節、聖誕節、父親節與母親節日期。"}
+                  : "開始建立教會年度行事曆，自動產生全年主日與主要節期日期。"}
               </p>
             </div>
             <Link className="rounded bg-sky-700 px-4 py-2 text-sm font-medium text-white" href="/calendar/builder">
-              {profile.language_preference === "en" ? "Open builder" : "開啟製作"}
+              {profile.language_preference === "en" ? "Start calendar" : "開始新建行事曆"}
             </Link>
           </div>
         </section>
