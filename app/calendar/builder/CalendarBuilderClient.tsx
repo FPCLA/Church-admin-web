@@ -51,7 +51,6 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
   const [drafts, setDrafts] = useState<DraftState>({});
   const [customItems, setCustomItems] = useState<CustomCalendarItem[]>([]);
   const [placements, setPlacements] = useState<PlacementState>(() => initialPlacements(annualCalendar));
-  const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>("");
   const editorRef = useRef<HTMLDivElement | null>(null);
@@ -62,7 +61,6 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
     const timeout = window.setTimeout(() => {
       setActiveDate(null);
       setDrafts({});
-      setSelectedDates([]);
       setCustomItems(readStorage<CustomCalendarItem[]>(customItemsStorageKey, []));
       setPlacements(readStorage<PlacementState>(placementStorageKey, initialPlacements(annualCalendar)));
       setSavedAt(window.localStorage.getItem(saveTimeStorageKey(annualCalendar.year)));
@@ -109,8 +107,6 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
   const sundayIndexByDate = useMemo(() => {
     return new Map(annualCalendar.sundays.map((sunday, index) => [sunday.date, index]));
   }, [annualCalendar.sundays]);
-
-  const selectedDateSet = useMemo(() => new Set(selectedDates), [selectedDates]);
 
   const specialDatesBySunday = useMemo(() => {
     const datesBySunday = new Map<string, CalendarSpecialDate[]>();
@@ -210,55 +206,29 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
     setActiveDate(null);
   }
 
-  function toggleSelectedDate(date: string) {
-    setSelectedDates((current) =>
-      current.includes(date) ? current.filter((selectedDate) => selectedDate !== date) : [...current, date],
-    );
-  }
-
-  function applyPreset(kind: PresetKind, action: "add" | "remove") {
-    if (selectedDates.length === 0) {
-      setStatusMessage(isEnglish ? "Select one or more dates first." : "請先勾選一個或多個日期。");
-      return;
-    }
-
+  function setDatePreset(sundayDate: string, kind: PresetKind, checked: boolean) {
     const text = presetText(kind, isEnglish);
 
-    if (action === "remove") {
+    if (!checked) {
       setCustomItems((current) =>
         current.filter(
           (item) =>
-            !selectedDateSet.has(item.sundayDate) ||
+            item.sundayDate !== sundayDate ||
             (item.kind !== kind && item.text !== presetText(kind, true) && item.text !== presetText(kind, false)),
         ),
       );
-      setStatusMessage(isEnglish ? `Removed ${text}.` : `已取消${text}。`);
+      setStatusMessage(isEnglish ? `Removed ${text} from ${sundayDate}.` : `${sundayDate} 已取消${text}。`);
       return;
     }
 
     setCustomItems((current) => {
-      const next = [...current];
-
-      for (const sundayDate of selectedDates) {
-        const exists = next.some(
-          (item) =>
-            item.sundayDate === sundayDate &&
-            (item.kind === kind || item.text === presetText(kind, true) || item.text === presetText(kind, false)),
-        );
-
-        if (!exists) {
-          next.push({
-            id: `${sundayDate}-${kind}-${Date.now()}-${next.length}`,
-            kind,
-            sundayDate,
-            text,
-          });
-        }
+      if (hasDatePreset(current, sundayDate, kind)) {
+        return current;
       }
 
-      return next;
+      return [...current, { id: `${sundayDate}-${kind}-${Date.now()}`, kind, sundayDate, text }];
     });
-    setStatusMessage(isEnglish ? `Added ${text}.` : `已加入${text}。`);
+    setStatusMessage(isEnglish ? `Added ${text} to ${sundayDate}.` : `${sundayDate} 已加入${text}。`);
   }
 
   function moveCustomItem(id: string, sundayDate: string) {
@@ -385,24 +355,6 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
   return (
     <section className="calendar-builder-sheet bg-white text-slate-950">
       <div className="calendar-builder-toolbar print:hidden">
-        <div className="calendar-builder-bulk-panel">
-          <strong>{isEnglish ? "Selected dates" : "已選日期"}: {selectedDates.length}</strong>
-          <button onClick={() => applyPreset("joint_service", "add")} type="button">
-            {isEnglish ? "Add Joint Worship" : "加入聯合禮拜"}
-          </button>
-          <button onClick={() => applyPreset("joint_service", "remove")} type="button">
-            {isEnglish ? "Remove Joint Worship" : "取消聯合禮拜"}
-          </button>
-          <button onClick={() => applyPreset("communion", "add")} type="button">
-            {isEnglish ? "Add Communion" : "加入聖餐"}
-          </button>
-          <button onClick={() => applyPreset("communion", "remove")} type="button">
-            {isEnglish ? "Remove Communion" : "取消聖餐"}
-          </button>
-          <button onClick={() => setSelectedDates([])} type="button">
-            {isEnglish ? "Clear" : "清除選取"}
-          </button>
-        </div>
         <div className="calendar-builder-save-panel">
           <button onClick={saveCalendar} type="button">
             {isEnglish ? "Save" : "儲存"}
@@ -482,17 +434,21 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
                     {isFirstMonthRow ? monthLabel(sunday.month, isEnglish) : ""}
                   </td>
                   <td className="calendar-builder-sunday-date">
-                    <label className="calendar-builder-date-select print:hidden">
-                      <input
-                        aria-label={
-                          isEnglish ? `Select ${sunday.date}` : `選取 ${sunday.date}`
-                        }
-                        checked={selectedDateSet.has(sunday.date)}
-                        onChange={() => toggleSelectedDate(sunday.date)}
-                        type="checkbox"
-                      />
-                      <span>{isEnglish ? "Select" : "選取"}</span>
-                    </label>
+                    <details className="calendar-builder-date-menu print:hidden">
+                      <summary>{isEnglish ? "Service options" : "聖餐／聯合禮拜"}</summary>
+                      <div className="calendar-builder-date-menu-options">
+                        {(["communion", "joint_service"] as const).map((kind) => (
+                          <label key={kind}>
+                            <input
+                              checked={hasDatePreset(customItems, sunday.date, kind)}
+                              onChange={(event) => setDatePreset(sunday.date, kind, event.target.checked)}
+                              type="checkbox"
+                            />
+                            <span>{presetText(kind, isEnglish)}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </details>
                     <button type="button" onClick={() => setActiveDate(sunday.date)}>
                       {formatSundayDay(sunday.date, isEnglish)}
                     </button>
@@ -699,6 +655,14 @@ function presetText(kind: PresetKind, isEnglish: boolean) {
   }
 
   return isEnglish ? "Communion" : "聖餐";
+}
+
+function hasDatePreset(items: CustomCalendarItem[], sundayDate: string, kind: PresetKind) {
+  return items.some(
+    (item) =>
+      item.sundayDate === sundayDate &&
+      (item.kind === kind || item.text === presetText(kind, true) || item.text === presetText(kind, false)),
+  );
 }
 
 function formatSundayDay(isoDate: string, isEnglish: boolean) {
