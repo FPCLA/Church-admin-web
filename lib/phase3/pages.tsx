@@ -61,7 +61,7 @@ export async function ModuleListPage({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold">
-                {profile.language_preference === "en" ? "New Annual Calendar" : "新建年度行事曆"}
+                {profile.language_preference === "en" ? "Calendar - New/Edit" : "行事曆-新建/編輯"}
               </h2>
               <p className="mt-1 text-sm text-slate-600">
                 {profile.language_preference === "en"
@@ -70,7 +70,7 @@ export async function ModuleListPage({
               </p>
             </div>
             <Link className="rounded bg-sky-700 px-4 py-2 text-sm font-medium text-white" href="/calendar/builder">
-              {profile.language_preference === "en" ? "Start calendar" : "開始新建行事曆"}
+              {profile.language_preference === "en" ? "New/Edit" : "新建/編輯"}
             </Link>
           </div>
         </section>

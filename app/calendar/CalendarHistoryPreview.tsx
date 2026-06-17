@@ -42,7 +42,7 @@ export function CalendarHistoryPreview({ isEnglish }: { isEnglish: boolean }) {
     <section className="rounded-lg border border-slate-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">
-          {isEnglish ? "Preview calendar history" : "預覽歷史行事曆"}
+          {isEnglish ? "Calendar - Preview" : "行事曆-預覽"}
         </h2>
         <div className="flex flex-wrap items-center gap-2">
           <label className="sr-only" htmlFor="calendar-history-year">
