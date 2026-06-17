@@ -248,6 +248,13 @@ a {
   width: 14px;
 }
 
+.calendar-builder-footnote {
+  color: #0f172a;
+  font-family: Arial, "Microsoft JhengHei", sans-serif;
+  font-size: 12px;
+  margin-top: 12px;
+}
+
 .calendar-builder-sunday-date button:hover,
 .calendar-builder-note-cell > button:hover {
   background: #eff6ff;

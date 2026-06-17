@@ -78,6 +78,27 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
   }, [placementStorageKey, placements]);
 
   useEffect(() => {
+    function closeDateMenus(event: MouseEvent | TouchEvent) {
+      const target = event.target;
+      if (target instanceof Element && target.closest(".calendar-builder-date-menu")) {
+        return;
+      }
+
+      document
+        .querySelectorAll<HTMLDetailsElement>(".calendar-builder-date-menu[open]")
+        .forEach((menu) => menu.removeAttribute("open"));
+    }
+
+    document.addEventListener("mousedown", closeDateMenus);
+    document.addEventListener("touchstart", closeDateMenus);
+
+    return () => {
+      document.removeEventListener("mousedown", closeDateMenus);
+      document.removeEventListener("touchstart", closeDateMenus);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!activeDate) {
       return;
     }
@@ -207,17 +228,15 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
   }
 
   function setDatePreset(sundayDate: string, kind: PresetKind, checked: boolean) {
-    const text = presetText(kind, isEnglish);
+    const label = presetText(kind, isEnglish);
 
     if (!checked) {
       setCustomItems((current) =>
         current.filter(
-          (item) =>
-            item.sundayDate !== sundayDate ||
-            (item.kind !== kind && item.text !== presetText(kind, true) && item.text !== presetText(kind, false)),
+          (item) => item.sundayDate !== sundayDate || !isPresetItem(item, kind),
         ),
       );
-      setStatusMessage(isEnglish ? `Removed ${text} from ${sundayDate}.` : `${sundayDate} 已取消${text}。`);
+      setStatusMessage(isEnglish ? `Removed ${label} from ${sundayDate}.` : `${sundayDate} 已取消${label}。`);
       return;
     }
 
@@ -226,9 +245,12 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
         return current;
       }
 
-      return [...current, { id: `${sundayDate}-${kind}-${Date.now()}`, kind, sundayDate, text }];
+      return [
+        ...current,
+        { id: `${sundayDate}-${kind}-${Date.now()}`, kind, sundayDate, text: presetCalendarText(kind) },
+      ];
     });
-    setStatusMessage(isEnglish ? `Added ${text} to ${sundayDate}.` : `${sundayDate} 已加入${text}。`);
+    setStatusMessage(isEnglish ? `Added ${label} to ${sundayDate}.` : `${sundayDate} 已加入${label}。`);
   }
 
   function moveCustomItem(id: string, sundayDate: string) {
@@ -464,7 +486,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
                             }}
                             type="button"
                           >
-                            {item.text}
+                            {calendarItemText(item)}
                           </button>
                           <span className="calendar-builder-special-actions print:hidden">
                             <button
@@ -562,6 +584,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish }: CalendarBui
           </tbody>
         </table>
       </div>
+      <footer className="calendar-builder-footnote">* 代表聯合禮拜 (* denotes Joint Service)</footer>
     </section>
   );
 
@@ -657,12 +680,33 @@ function presetText(kind: PresetKind, isEnglish: boolean) {
   return isEnglish ? "Communion" : "聖餐";
 }
 
-function hasDatePreset(items: CustomCalendarItem[], sundayDate: string, kind: PresetKind) {
-  return items.some(
-    (item) =>
-      item.sundayDate === sundayDate &&
-      (item.kind === kind || item.text === presetText(kind, true) || item.text === presetText(kind, false)),
+function presetCalendarText(kind: PresetKind) {
+  return kind === "joint_service" ? "*" : "(聖餐禮 Holy Communion)";
+}
+
+function isPresetItem(item: CustomCalendarItem, kind: PresetKind) {
+  return (
+    item.kind === kind ||
+    item.text === presetText(kind, true) ||
+    item.text === presetText(kind, false) ||
+    item.text === presetCalendarText(kind)
   );
+}
+
+function hasDatePreset(items: CustomCalendarItem[], sundayDate: string, kind: PresetKind) {
+  return items.some((item) => item.sundayDate === sundayDate && isPresetItem(item, kind));
+}
+
+function calendarItemText(item: CustomCalendarItem) {
+  if (isPresetItem(item, "joint_service")) {
+    return presetCalendarText("joint_service");
+  }
+
+  if (isPresetItem(item, "communion")) {
+    return presetCalendarText("communion");
+  }
+
+  return item.text;
 }
 
 function formatSundayDay(isoDate: string, isEnglish: boolean) {
@@ -762,7 +806,7 @@ function buildPreviewHtml({
         ]);
       }
 
-      const customItems = (customItemsBySunday.get(row.sunday.date) || []).map((item) => item.text);
+      const customItems = (customItemsBySunday.get(row.sunday.date) || []).map(calendarItemText);
       const specialItems = (specialDatesBySunday.get(row.sunday.date) || []).map((specialDate) =>
         formatSpecialDateLabel(specialDate, placements[specialDate.key] || null, isEnglish),
       );
@@ -857,6 +901,11 @@ function buildPreviewHtml({
       display: grid;
       gap: 4px;
     }
+    .footnote {
+      font-family: Arial, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      font-size: 12px;
+      margin-top: 12px;
+    }
     @media print {
       body { background: white; padding: 0; }
       .actions { display: none; }
@@ -883,6 +932,7 @@ function buildPreviewHtml({
       </thead>
       <tbody>${rows}</tbody>
     </table>
+    <footer class="footnote">* 代表聯合禮拜 (* denotes Joint Service)</footer>
   </main>
 </body>
 </html>`;
