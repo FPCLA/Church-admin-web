@@ -76,34 +76,71 @@ a {
   margin: 0;
 }
 
-.calendar-builder-holidays {
-  display: grid;
-  gap: 6px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+.calendar-builder-confirmation {
   margin-bottom: 12px;
 }
 
-.calendar-builder-holidays div {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  border-radius: 4px;
-  min-height: 48px;
-  padding: 6px 8px;
+.calendar-builder-section-title {
+  background: #1d4ed8;
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 5px 8px;
+  text-align: center;
 }
 
-.calendar-builder-holidays span {
-  color: #1e3a8a;
-  display: block;
-  font-size: 12px;
-  font-weight: 700;
+.calendar-builder-confirmation table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
 }
 
-.calendar-builder-holidays strong {
-  color: #0f172a;
-  display: block;
-  font-size: 12px;
-  font-weight: 700;
-  margin-top: 2px;
+.calendar-builder-confirmation th,
+.calendar-builder-confirmation td {
+  border: 1px solid #64748b;
+  font-size: 10.5px;
+  line-height: 1.25;
+  padding: 4px 5px;
+  vertical-align: middle;
+}
+
+.calendar-builder-confirmation th {
+  background: #dbeafe;
+  font-weight: 800;
+  text-align: center;
+}
+
+.calendar-builder-confirmation th:nth-child(1),
+.calendar-builder-confirmation td:nth-child(1) {
+  width: 20%;
+}
+
+.calendar-builder-confirmation th:nth-child(2),
+.calendar-builder-confirmation td:nth-child(2) {
+  text-align: center;
+  width: 13%;
+}
+
+.calendar-builder-confirmation th:nth-child(3),
+.calendar-builder-confirmation td:nth-child(3) {
+  text-align: center;
+  width: 8%;
+}
+
+.calendar-builder-confirmation th:nth-child(4),
+.calendar-builder-confirmation td:nth-child(4) {
+  width: 28%;
+}
+
+.calendar-builder-confirmation th:nth-child(5),
+.calendar-builder-confirmation td:nth-child(5) {
+  width: 19%;
+}
+
+.calendar-builder-confirmation th:nth-child(6),
+.calendar-builder-confirmation td:nth-child(6) {
+  text-align: center;
+  width: 12%;
 }
 
 .calendar-builder-grid {
@@ -169,9 +206,16 @@ a {
     padding: 16px;
   }
 
-  .calendar-builder-holidays,
   .calendar-builder-grid {
     grid-template-columns: 1fr;
+  }
+
+  .calendar-builder-confirmation {
+    overflow-x: auto;
+  }
+
+  .calendar-builder-confirmation table {
+    min-width: 920px;
   }
 }
 
