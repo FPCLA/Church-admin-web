@@ -1163,7 +1163,7 @@ function monthLabel(month: number, isEnglish: boolean) {
     return monthShort(month);
   }
 
-  return `${toChineseMonth(month)}月 (${monthShort(month)})`;
+  return `${toChineseMonth(month)}  月`;
 }
 
 function monthShort(month: number) {
@@ -1340,18 +1340,18 @@ function buildPreviewHtml({
     th:nth-child(1), td:nth-child(1), th:nth-child(2), td:nth-child(2) {
       text-align: center;
     }
-    th:nth-child(1), td:nth-child(1) { width: 15%; }
-    th:nth-child(2), td:nth-child(2) { width: 10%; }
+    th:nth-child(1), td:nth-child(1) { width: 8%; }
+    th:nth-child(2), td:nth-child(2) { width: 8%; }
     th:nth-child(3), td:nth-child(3) {
-      width: 38%;
+      width: 66%;
     }
     th:nth-child(4), td:nth-child(4) {
-      width: 37%;
+      width: 18%;
     }
     th:nth-child(4), td:nth-child(4) {
       text-align: right;
     }
-    th:nth-child(1), td:nth-child(1) { font-size: 13px; white-space: nowrap; }
+    th:nth-child(1), td:nth-child(1) { font-size: 13px; white-space: pre; }
     tbody td:nth-child(1) { padding-left: 2px; text-align: left; }
     tbody td:nth-child(2) { padding-left: 4px; text-align: left; }
     tbody td:nth-child(3) { white-space: pre-wrap; }

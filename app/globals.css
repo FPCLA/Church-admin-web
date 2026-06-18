@@ -179,23 +179,24 @@ a {
 .calendar-builder-linear th:first-child,
 .calendar-builder-linear td:first-child {
   text-align: center;
-  width: 15%;
+  width: 8%;
 }
 
 .calendar-builder-linear th:nth-child(2),
 .calendar-builder-linear td:nth-child(2) {
   text-align: center;
-  width: 10%;
+  width: 8%;
 }
 
 .calendar-builder-linear th:nth-child(3),
 .calendar-builder-linear td:nth-child(3) {
-  width: 38%;
+  width: 66%;
 }
 
 .calendar-builder-linear th:nth-child(4),
 .calendar-builder-linear td:nth-child(4) {
-  width: 37%;
+  text-align: right;
+  width: 18%;
 }
 
 .calendar-builder-linear tbody td:first-child {
