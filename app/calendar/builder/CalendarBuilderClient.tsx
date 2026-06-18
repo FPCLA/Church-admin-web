@@ -7,7 +7,7 @@ import {
   type CalendarTheme,
   type ElderAssignment,
 } from "./CalendarAnnualDetails";
-import { bibleBook, calendarMonths } from "./calendar-options";
+import { bibleBook } from "./calendar-options";
 
 type AnnualCalendar = {
   specialDates: CalendarSpecialDate[];
@@ -682,12 +682,11 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
         </table>
       </div>
       <footer className="calendar-builder-footnote">
-        {elderSummary(elders, 1, 12, isEnglish) ? (
-          <div className="calendar-builder-elder-summary">
-            {elderSummary(elders, 1, 12, isEnglish)}
-          </div>
-        ) : null}
-        <div>「 * 」 代表聯合禮拜  「 * 」 denotes Joint Service</div>
+        <CalendarElderFooter elders={elders} firstMonth={1} lastMonth={12} />
+        <div className="calendar-builder-joint-legend">
+          <div>「 * 」 代表聯合禮拜</div>
+          <div>「 * 」 denotes Joint Service</div>
+        </div>
       </footer>
     </section>
   );
@@ -781,27 +780,56 @@ function themeReference(theme: CalendarTheme, english: boolean) {
     : `${bookName} ${theme.chapter}章${theme.verse ? `${theme.verse}節` : ""}`;
 }
 
-function elderSummary(elders: ElderAssignment[], firstMonth: number, lastMonth: number, isEnglish: boolean) {
-  const assignments = elders
-    .map((elder) => ({
-      ...elder,
-      months: elder.months.filter((month) => month >= firstMonth && month <= lastMonth),
-    }))
-    .filter((elder) => elder.name.trim() && elder.months.length)
-    .map((elder) => {
-      const months = elder.months
-        .map((month) => calendarMonths.find(([value]) => value === month))
-        .filter((month): month is (typeof calendarMonths)[number] => Boolean(month))
-        .map((month) => isEnglish ? month[2] : month[1])
-        .join(isEnglish ? ", " : "、");
-      return `${elder.name.trim()} (${months})`;
-    });
-
-  if (!assignments.length) {
-    return "";
+function CalendarElderFooter({
+  elders,
+  firstMonth,
+  lastMonth,
+}: {
+  elders: ElderAssignment[];
+  firstMonth: number;
+  lastMonth: number;
+}) {
+  if (!elders.some((elder) => elder.name.trim() && elder.months.length)) {
+    return null;
   }
 
-  return `${isEnglish ? "Elders in charge" : "值星長老"}：${assignments.join("  ")}`;
+  const assignments = monthlyElderAssignments(elders, firstMonth, lastMonth);
+  const rows = chunk(assignments, 3);
+
+  return (
+    <div className="calendar-builder-elder-grid">
+      {rows.map((row, rowIndex) => (
+        <div className="calendar-builder-elder-grid-row" key={row[0]?.month || rowIndex}>
+          <span className="calendar-builder-elder-grid-label">
+            {rowIndex === 0 ? "值星長老：" : rowIndex === 1 ? "Elder in Charge:" : ""}
+          </span>
+          {row.map(({ month, name }) => (
+            <span key={month}>
+              {footerMonthShort(month)}{name ? ` (${name})` : ""}
+            </span>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function monthlyElderAssignments(elders: ElderAssignment[], firstMonth: number, lastMonth: number) {
+  return Array.from({ length: lastMonth - firstMonth + 1 }, (_, index) => {
+    const month = firstMonth + index;
+    const name = elders.find((elder) => elder.months.includes(month))?.name.trim() || "";
+    return { month, name };
+  });
+}
+
+function chunk<T>(items: T[], size: number) {
+  return Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
+    items.slice(index * size, index * size + size),
+  );
+}
+
+function footerMonthShort(month: number) {
+  return monthShort(month).replace(".", "");
 }
 
 function readStorage<T>(key: string, fallback: T) {
@@ -995,7 +1023,7 @@ function buildPreviewHtml({
 
   const pages = pageRows
     .map(
-      (rows, pageIndex) => `<main class="sheet">
+      (rows) => `<main class="sheet">
     <header class="title">
       <h1>${annualCalendar.year} ${isEnglish ? "FPCLA Calendar" : "年洛杉磯台灣基督長老教會行事曆"} <span>FPCLA Calendar</span></h1>
       <p><strong>${isEnglish ? "Theme:" : "主題："}</strong> ${escapeHtml(theme.contentZh)}${themeReference(theme, false) ? `（${escapeHtml(themeReference(theme, false))}）` : ""}</p>
@@ -1013,8 +1041,11 @@ function buildPreviewHtml({
       <tbody>${rows}</tbody>
     </table>
     <footer class="footnote">
-      ${elderSummary(elders, pageIndex === 0 ? 1 : 7, pageIndex === 0 ? 6 : 12, isEnglish) ? `<div class="elder-summary">${escapeHtml(elderSummary(elders, pageIndex === 0 ? 1 : 7, pageIndex === 0 ? 6 : 12, isEnglish))}</div>` : ""}
-      <div>「 * 」 代表聯合禮拜  「 * 」 denotes Joint Service</div>
+      ${elderFooterHtml(elders, 1, 12)}
+      <div class="joint-legend">
+        <div>「 * 」 代表聯合禮拜</div>
+        <div>「 * 」 denotes Joint Service</div>
+      </div>
     </footer>
   </main>`,
     )
@@ -1129,10 +1160,24 @@ function buildPreviewHtml({
       padding-top: 12px;
       text-align: center;
     }
-    .elder-summary {
-      font-weight: 700;
-      margin-bottom: 6px;
-      white-space: pre;
+    .elder-grid {
+      display: grid;
+      gap: 4px;
+      margin-bottom: 30px;
+      text-align: left;
+    }
+    .elder-grid-row {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 155px repeat(3, minmax(0, 1fr));
+    }
+    .elder-grid-label {
+      white-space: nowrap;
+    }
+    .joint-legend {
+      line-height: 1.6;
+      margin-left: 110px;
+      text-align: left;
     }
     @media print {
       body { background: white; padding: 0; }
@@ -1160,6 +1205,20 @@ function tableRow(cells: Array<string | string[]>, className = "") {
       return `<td>${escapeHtml(cell)}</td>`;
     })
     .join("")}</tr>`;
+}
+
+function elderFooterHtml(elders: ElderAssignment[], firstMonth: number, lastMonth: number) {
+  if (!elders.some((elder) => elder.name.trim() && elder.months.length)) {
+    return "";
+  }
+
+  const rows = chunk(monthlyElderAssignments(elders, firstMonth, lastMonth), 3);
+  return `<div class="elder-grid">${rows.map((row, rowIndex) => `
+    <div class="elder-grid-row">
+      <span class="elder-grid-label">${rowIndex === 0 ? "值星長老：" : rowIndex === 1 ? "Elder in Charge:" : ""}</span>
+      ${row.map(({ month, name }) => `<span>${footerMonthShort(month)}${name ? ` (${escapeHtml(name)})` : ""}</span>`).join("")}
+    </div>`).join("")}
+  </div>`;
 }
 
 function escapeHtml(value: string) {

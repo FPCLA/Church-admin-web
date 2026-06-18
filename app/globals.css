@@ -269,13 +269,29 @@ a {
   font-size: 12px;
   margin-top: 12px;
   text-align: center;
-  white-space: pre-wrap;
 }
 
-.calendar-builder-elder-summary {
-  font-weight: 700;
-  margin-bottom: 6px;
-  white-space: pre;
+.calendar-builder-elder-grid {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.calendar-builder-elder-grid-row {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 155px repeat(3, minmax(0, 1fr));
+}
+
+.calendar-builder-elder-grid-label {
+  white-space: nowrap;
+}
+
+.calendar-builder-joint-legend {
+  line-height: 1.6;
+  margin-left: 110px;
+  text-align: left;
 }
 
 .calendar-builder-preview-frame {
