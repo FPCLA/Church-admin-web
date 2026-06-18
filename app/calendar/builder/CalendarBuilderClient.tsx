@@ -1239,22 +1239,28 @@ function buildPreviewHtml({
 
         const sortedItems = sortCalendarItems(customItemsBySunday.get(row.sunday.date) || []);
         const hasJointService = sortedItems.some((item) => isPresetItem(item, "joint_service"));
-        const customItems = sortedItems
-          .filter((item) => !isPresetItem(item, "joint_service"))
-          .map(
-            (item) =>
-              `<span class="preview-calendar-item${item.align === "right" ? " is-right" : ""}">${escapeHtml(calendarItemText(item))}</span>`,
-          )
+        const ordinaryItems = sortedItems.filter((item) => !isPresetItem(item, "joint_service"));
+        const customItems = ordinaryItems
+          .filter((item) => item.align !== "right")
+          .map((item) => `<span class="preview-calendar-item">${escapeHtml(calendarItemText(item))}</span>`)
           .join("  ");
+        const rightAlignedItems = ordinaryItems
+          .filter((item) => item.align === "right")
+          .map((item) => calendarItemText(item));
         const specialItems = (specialDatesBySunday.get(row.sunday.date) || []).map((specialDate) =>
           formatSpecialDateLabel(specialDate, placements[specialDate.key] || null, isEnglish),
         );
+        const rightColumnItems = [...rightAlignedItems, ...specialItems];
 
         return tableRow([
           month,
           `${formatSundayDay(row.sunday.date, isEnglish)}${hasJointService ? "*" : ""}`,
           { html: `<div class="preview-calendar-items">${customItems}</div>` },
-          specialItems.join("  "),
+          {
+            html: `<div class="preview-right-items">${rightColumnItems
+              .map((item) => `<div>${escapeHtml(item)}</div>`)
+              .join("")}</div>`,
+          },
         ], isMonthStart ? "month-start" : "");
       })
       .join(""),
@@ -1384,11 +1390,9 @@ function buildPreviewHtml({
     tbody td:nth-child(2) { padding-left: 4px; text-align: left; }
     tbody td:nth-child(3) { white-space: pre-wrap; }
     tbody td:nth-child(4) { white-space: nowrap; }
-    .preview-calendar-items { display: flow-root; }
-    .preview-calendar-item.is-right {
-      clear: right;
-      float: right;
+    .preview-right-items {
       text-align: right;
+      white-space: nowrap;
     }
     .own-special-row td {
       text-align: center !important;

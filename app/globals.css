@@ -375,6 +375,20 @@ a {
   gap: 5px;
 }
 
+.calendar-builder-special-item {
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.calendar-builder-special-item > span:first-child {
+  flex: 0 0 auto;
+}
+
+.calendar-builder-special-item .calendar-builder-special-actions {
+  flex-wrap: nowrap;
+}
+
 .calendar-builder-custom-item > button {
   background: #eff6ff;
   border: 1px solid #93c5fd;
