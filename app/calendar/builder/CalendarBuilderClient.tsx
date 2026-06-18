@@ -514,11 +514,15 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
           </thead>
           <tbody>
             {page.rows.map((row, index) => {
-              const isFirstMonthRow = index === 0 || page.rows[index - 1]?.month !== row.month;
+              const isMonthStart = index > 0 && page.rows[index - 1]?.month !== row.month;
+              const isFirstMonthRow = index === 0 || isMonthStart;
 
               if (row.type === "special") {
                 return (
-                  <tr className="calendar-builder-own-special-row" key={`special-${row.specialDate.key}`}>
+                  <tr
+                    className={`calendar-builder-own-special-row${isMonthStart ? " calendar-builder-month-start" : ""}`}
+                    key={`special-${row.specialDate.key}`}
+                  >
                     <td className="calendar-builder-month-label">
                       {isFirstMonthRow ? monthLabel(row.month, isEnglish) : ""}
                     </td>
@@ -539,7 +543,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
 
               return (
                 <tr
-                  className={isEditing ? "is-editing" : ""}
+                  className={`${isEditing ? "is-editing" : ""}${isMonthStart ? " calendar-builder-month-start" : ""}`.trim()}
                   key={sunday.date}
                   onDragOver={readOnly ? undefined : (event) => event.preventDefault()}
                   onDrop={readOnly ? undefined : (event) => {
@@ -581,7 +585,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
                     onClick={readOnly ? undefined : () => setActiveDate(sunday.date)}
                   >
                     <div className="calendar-builder-custom-items">
-                      {(customItemsBySunday.get(sunday.date) || []).map((item) => (
+                      {sortCalendarItems(customItemsBySunday.get(sunday.date) || []).map((item) => (
                         <div className="calendar-builder-custom-item" key={item.id}>
                           {readOnly ? (
                             <span>{calendarItemText(item)}</span>
@@ -916,6 +920,22 @@ function calendarItemText(item: CustomCalendarItem) {
   return item.text;
 }
 
+function sortCalendarItems(items: CustomCalendarItem[]) {
+  return [...items].sort((first, second) => calendarItemPriority(first) - calendarItemPriority(second));
+}
+
+function calendarItemPriority(item: CustomCalendarItem) {
+  if (isPresetItem(item, "joint_service")) {
+    return 0;
+  }
+
+  if (isPresetItem(item, "communion")) {
+    return 1;
+  }
+
+  return 2;
+}
+
 function formatSundayDay(isoDate: string, isEnglish: boolean) {
   const date = new Date(`${isoDate}T00:00:00Z`);
   const day = date.getUTCDate();
@@ -1010,6 +1030,7 @@ function buildPreviewHtml({
     rowsForPage
       .map((row, index) => {
         const showMonth = index === 0 || rowsForPage[index - 1]?.month !== row.month;
+        const isMonthStart = index > 0 && rowsForPage[index - 1]?.month !== row.month;
         const month = showMonth ? monthLabel(row.month, isEnglish) : "";
 
         if (row.type === "special") {
@@ -1018,10 +1039,12 @@ function buildPreviewHtml({
             formatSpecialDateDate(row.specialDate.date, isEnglish),
             "",
             formatSpecialDateLabel(row.specialDate, placements[row.specialDate.key] || null, isEnglish),
-          ], "own-special-row");
+          ], `own-special-row${isMonthStart ? " month-start" : ""}`);
         }
 
-        const customItems = (customItemsBySunday.get(row.sunday.date) || []).map(calendarItemText);
+        const customItems = sortCalendarItems(customItemsBySunday.get(row.sunday.date) || [])
+          .map(calendarItemText)
+          .join("  ");
         const specialItems = (specialDatesBySunday.get(row.sunday.date) || []).map((specialDate) =>
           formatSpecialDateLabel(specialDate, placements[specialDate.key] || null, isEnglish),
         );
@@ -1031,7 +1054,7 @@ function buildPreviewHtml({
           formatSundayDay(row.sunday.date, isEnglish),
           customItems,
           specialItems,
-        ]);
+        ], isMonthStart ? "month-start" : "");
       })
       .join(""),
   );
@@ -1147,21 +1170,27 @@ function buildPreviewHtml({
     th:nth-child(1), td:nth-child(1), th:nth-child(2), td:nth-child(2) {
       text-align: center;
     }
-    th:nth-child(1), td:nth-child(1) { width: 17%; }
-    th:nth-child(2), td:nth-child(2) { width: 12%; }
+    th:nth-child(1), td:nth-child(1) { width: 15%; }
+    th:nth-child(2), td:nth-child(2) { width: 10%; }
     th:nth-child(3), td:nth-child(3) {
-      width: 35%;
+      width: 38%;
     }
     th:nth-child(4), td:nth-child(4) {
-      width: 36%;
+      width: 37%;
     }
     th:nth-child(4), td:nth-child(4) {
       text-align: right;
     }
     th:nth-child(1), td:nth-child(1) { font-size: 13px; white-space: nowrap; }
+    tbody td:nth-child(1) { padding-right: 2px; text-align: right; }
+    tbody td:nth-child(2) { padding-left: 4px; text-align: left; }
+    tbody td:nth-child(3) { white-space: pre-wrap; }
     .own-special-row td:nth-child(2),
     .own-special-row td:nth-child(4) {
       text-align: center;
+    }
+    .month-start td {
+      border-top: 3px double #334155;
     }
     .cell-lines {
       display: grid;
