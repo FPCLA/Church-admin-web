@@ -199,8 +199,8 @@ a {
 }
 
 .calendar-builder-linear tbody td:first-child {
-  padding-right: 2px;
-  text-align: right;
+  padding-left: 2px;
+  text-align: left;
 }
 
 .calendar-builder-linear tbody td:nth-child(2) {

@@ -1126,14 +1126,6 @@ function buildPreviewHtml({
       ${theme.contentEn ? `<p><strong>Theme:</strong> ${escapeHtml(theme.contentEn)}${themeReference(theme, true) ? ` (${escapeHtml(themeReference(theme, true))})` : ""}</p>` : ""}
     </header>
     <table>
-      <thead>
-        <tr>
-          <th>${isEnglish ? "Month" : "月"}</th>
-          <th>${isEnglish ? "Sunday" : "主日"}</th>
-          <th>${isEnglish ? "Church calendar" : "教會行事"}</th>
-          <th aria-label="${isEnglish ? "Special dates and holidays" : "特殊日子與節日"}"></th>
-        </tr>
-      </thead>
       <tbody>${rows}</tbody>
     </table>
     <footer class="footnote">
@@ -1240,7 +1232,7 @@ function buildPreviewHtml({
       text-align: right;
     }
     th:nth-child(1), td:nth-child(1) { font-size: 13px; white-space: nowrap; }
-    tbody td:nth-child(1) { padding-right: 2px; text-align: right; }
+    tbody td:nth-child(1) { padding-left: 2px; text-align: left; }
     tbody td:nth-child(2) { padding-left: 4px; text-align: left; }
     tbody td:nth-child(3) { white-space: pre-wrap; }
     .own-special-row td {
