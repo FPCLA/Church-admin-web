@@ -160,29 +160,23 @@ a {
 .calendar-builder-linear th:first-child,
 .calendar-builder-linear td:first-child {
   text-align: center;
-  width: 15%;
+  width: 17%;
 }
 
 .calendar-builder-linear th:nth-child(2),
 .calendar-builder-linear td:nth-child(2) {
   text-align: center;
-  width: 11%;
+  width: 12%;
 }
 
 .calendar-builder-linear th:nth-child(3),
 .calendar-builder-linear td:nth-child(3) {
-  width: 30%;
+  width: 35%;
 }
 
 .calendar-builder-linear th:nth-child(4),
 .calendar-builder-linear td:nth-child(4) {
-  width: 30%;
-}
-
-.calendar-builder-linear th:nth-child(5),
-.calendar-builder-linear td:nth-child(5) {
-  text-align: center;
-  width: 14%;
+  width: 36%;
 }
 
 .calendar-builder-linear td {
@@ -275,6 +269,13 @@ a {
   font-size: 12px;
   margin-top: 12px;
   text-align: center;
+  white-space: pre-wrap;
+}
+
+.calendar-builder-elder-summary {
+  font-weight: 700;
+  margin-bottom: 6px;
+  white-space: pre;
 }
 
 .calendar-builder-preview-frame {
@@ -420,7 +421,12 @@ a {
 .calendar-builder-theme-grid {
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(220px, 2fr) minmax(180px, 1.5fr) 90px 90px;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr) minmax(70px, 0.6fr) minmax(70px, 0.6fr);
+  max-width: 100%;
+}
+
+.calendar-builder-theme-grid > label {
+  min-width: 0;
 }
 
 .calendar-builder-theme-grid label,
@@ -444,6 +450,7 @@ a {
   font: inherit;
   min-height: 38px;
   padding: 8px 10px;
+  width: 100%;
 }
 
 .calendar-builder-theme-english {

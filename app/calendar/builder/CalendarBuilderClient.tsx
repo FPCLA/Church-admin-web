@@ -501,7 +501,6 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
               <th>{isEnglish ? "Sunday" : "主日"}</th>
               <th>{isEnglish ? "Church calendar" : "教會行事"}</th>
               <th>{readOnly ? "" : isEnglish ? "Special dates / holidays" : "特殊日子 / 節日"}</th>
-              <th>{isEnglish ? "Elder in charge" : "值星長老"}</th>
             </tr>
           </thead>
           <tbody>
@@ -520,9 +519,6 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
                     <td className="calendar-builder-note-cell" />
                     <td className="calendar-builder-special-cell">
                       {renderSpecialDateItem(row.specialDate, placements[row.specialDate.key] || null)}
-                    </td>
-                    <td className="calendar-builder-elder-cell">
-                      {isFirstMonthRow ? elderForMonth(elders, row.month) : ""}
                     </td>
                   </tr>
                 );
@@ -679,9 +675,6 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
                       renderSpecialDateItem(specialDate, placements[specialDate.key] || null),
                     )}
                   </td>
-                  <td className="calendar-builder-elder-cell">
-                    {isFirstMonthRow ? elderForMonth(elders, row.month) : ""}
-                  </td>
                 </tr>
               );
             })}
@@ -689,8 +682,12 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
         </table>
       </div>
       <footer className="calendar-builder-footnote">
-        <div>「 * 」 代表聯合禮拜</div>
-        <div>「 * 」 denotes Joint Service</div>
+        {elderSummary(elders, 1, 12, isEnglish) ? (
+          <div className="calendar-builder-elder-summary">
+            {elderSummary(elders, 1, 12, isEnglish)}
+          </div>
+        ) : null}
+        <div>「 * 」 代表聯合禮拜  「 * 」 denotes Joint Service</div>
       </footer>
     </section>
   );
@@ -784,10 +781,6 @@ function themeReference(theme: CalendarTheme, english: boolean) {
     : `${bookName} ${theme.chapter}章${theme.verse ? `${theme.verse}節` : ""}`;
 }
 
-function elderForMonth(elders: ElderAssignment[], month: number) {
-  return elders.find((elder) => elder.months.includes(month))?.name.trim() || "";
-}
-
 function elderSummary(elders: ElderAssignment[], firstMonth: number, lastMonth: number, isEnglish: boolean) {
   const assignments = elders
     .map((elder) => ({
@@ -808,7 +801,7 @@ function elderSummary(elders: ElderAssignment[], firstMonth: number, lastMonth: 
     return "";
   }
 
-  return `${isEnglish ? "Elders in charge" : "值星長老"}：${assignments.join(isEnglish ? "; " : "；")}`;
+  return `${isEnglish ? "Elders in charge" : "值星長老"}：${assignments.join("  ")}`;
 }
 
 function readStorage<T>(key: string, fallback: T) {
@@ -982,7 +975,6 @@ function buildPreviewHtml({
             formatSpecialDateDate(row.specialDate.date, isEnglish),
             "",
             formatSpecialDateLabel(row.specialDate, placements[row.specialDate.key] || null, isEnglish),
-            showMonth ? elderForMonth(elders, row.month) : "",
           ], "own-special-row");
         }
 
@@ -996,7 +988,6 @@ function buildPreviewHtml({
           formatSundayDay(row.sunday.date, isEnglish),
           customItems,
           specialItems,
-          showMonth ? elderForMonth(elders, row.month) : "",
         ]);
       })
       .join(""),
@@ -1017,15 +1008,13 @@ function buildPreviewHtml({
           <th>${isEnglish ? "Sunday" : "主日"}</th>
           <th>${isEnglish ? "Church calendar" : "教會行事"}</th>
           <th aria-label="${isEnglish ? "Special dates and holidays" : "特殊日子與節日"}"></th>
-          <th>${isEnglish ? "Elder" : "值星長老"}</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
     <footer class="footnote">
       ${elderSummary(elders, pageIndex === 0 ? 1 : 7, pageIndex === 0 ? 6 : 12, isEnglish) ? `<div class="elder-summary">${escapeHtml(elderSummary(elders, pageIndex === 0 ? 1 : 7, pageIndex === 0 ? 6 : 12, isEnglish))}</div>` : ""}
-      <div>「 * 」 代表聯合禮拜</div>
-      <div>「 * 」 denotes Joint Service</div>
+      <div>「 * 」 代表聯合禮拜  「 * 」 denotes Joint Service</div>
     </footer>
   </main>`,
     )
@@ -1112,20 +1101,16 @@ function buildPreviewHtml({
     th:nth-child(1), td:nth-child(1), th:nth-child(2), td:nth-child(2) {
       text-align: center;
     }
-    th:nth-child(1), td:nth-child(1) { width: 15%; }
-    th:nth-child(2), td:nth-child(2) { width: 11%; }
+    th:nth-child(1), td:nth-child(1) { width: 17%; }
+    th:nth-child(2), td:nth-child(2) { width: 12%; }
     th:nth-child(3), td:nth-child(3) {
-      width: 30%;
+      width: 35%;
     }
     th:nth-child(4), td:nth-child(4) {
-      width: 30%;
+      width: 36%;
     }
     th:nth-child(4), td:nth-child(4) {
       text-align: right;
-    }
-    th:nth-child(5), td:nth-child(5) {
-      text-align: center;
-      width: 14%;
     }
     th:nth-child(1), td:nth-child(1) { font-size: 13px; white-space: nowrap; }
     .own-special-row td:nth-child(2),
@@ -1147,6 +1132,7 @@ function buildPreviewHtml({
     .elder-summary {
       font-weight: 700;
       margin-bottom: 6px;
+      white-space: pre;
     }
     @media print {
       body { background: white; padding: 0; }
