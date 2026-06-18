@@ -34,6 +34,7 @@ type AnnualDetailsState = {
 };
 
 type CustomCalendarItem = {
+  align?: "right";
   fellowship?: FellowshipName;
   id: string;
   sundayDate: string;
@@ -435,6 +436,14 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
     setCustomItems((current) => current.filter((item) => item.id !== id));
   }
 
+  function toggleCustomItemRightAlignment(id: string) {
+    setCustomItems((current) =>
+      current.map((item) =>
+        item.id === id ? { ...item, align: item.align === "right" ? undefined : "right" } : item,
+      ),
+    );
+  }
+
   function setSpecialDateMode(key: string, mode: "own" | "previous" | "next") {
     const specialDate = annualCalendar.specialDates.find((current) => current.key === key);
     if (!specialDate?.date) {
@@ -728,6 +737,16 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
                           </button>}
                           {!readOnly && editingItemId !== item.id ? <span className="calendar-builder-special-actions print:hidden">
                             {!isPresetItem(item, "joint_service") && !isPresetItem(item, "communion") ? <>
+                              <button
+                                aria-pressed={item.align === "right"}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  toggleCustomItemRightAlignment(item.id);
+                                }}
+                                type="button"
+                              >
+                                {isEnglish ? "Right" : "靠右"}
+                              </button>
                               <button
                                 disabled={!canMoveCalendarItem(customItems, item, -1)}
                                 onClick={(event) => {
@@ -1222,7 +1241,10 @@ function buildPreviewHtml({
         const hasJointService = sortedItems.some((item) => isPresetItem(item, "joint_service"));
         const customItems = sortedItems
           .filter((item) => !isPresetItem(item, "joint_service"))
-          .map(calendarItemText)
+          .map(
+            (item) =>
+              `<span class="preview-calendar-item${item.align === "right" ? " is-right" : ""}">${escapeHtml(calendarItemText(item))}</span>`,
+          )
           .join("  ");
         const specialItems = (specialDatesBySunday.get(row.sunday.date) || []).map((specialDate) =>
           formatSpecialDateLabel(specialDate, placements[specialDate.key] || null, isEnglish),
@@ -1231,8 +1253,8 @@ function buildPreviewHtml({
         return tableRow([
           month,
           `${formatSundayDay(row.sunday.date, isEnglish)}${hasJointService ? "*" : ""}`,
-          customItems,
-          specialItems,
+          { html: `<div class="preview-calendar-items">${customItems}</div>` },
+          specialItems.join("  "),
         ], isMonthStart ? "month-start" : "");
       })
       .join(""),
@@ -1286,6 +1308,7 @@ function buildPreviewHtml({
       border: 1px solid #94a3b8;
       border-radius: 4px;
       color: #0f172a;
+      cursor: pointer;
       font: inherit;
       padding: 8px 12px;
     }
@@ -1349,6 +1372,7 @@ function buildPreviewHtml({
     th:nth-child(3), td:nth-child(3) {
       width: 66%;
     }
+    th:nth-child(3) { text-align: center; }
     th:nth-child(4), td:nth-child(4) {
       width: 18%;
     }
@@ -1359,6 +1383,13 @@ function buildPreviewHtml({
     tbody td:nth-child(1) { padding-left: 2px; text-align: left; }
     tbody td:nth-child(2) { padding-left: 4px; text-align: left; }
     tbody td:nth-child(3) { white-space: pre-wrap; }
+    tbody td:nth-child(4) { white-space: nowrap; }
+    .preview-calendar-items { display: flow-root; }
+    .preview-calendar-item.is-right {
+      clear: right;
+      float: right;
+      text-align: right;
+    }
     .own-special-row td {
       text-align: center !important;
       white-space: nowrap;
@@ -1461,11 +1492,15 @@ function buildPreviewHtml({
 </html>`;
 }
 
-function tableRow(cells: Array<string | string[]>, className = "") {
+function tableRow(cells: Array<string | string[] | { html: string }>, className = "") {
   return `<tr${className ? ` class="${className}"` : ""}>${cells
     .map((cell) => {
       if (Array.isArray(cell)) {
         return `<td><div class="cell-lines">${cell.map((line) => `<div>${escapeHtml(line)}</div>`).join("")}</div></td>`;
+      }
+
+      if (typeof cell === "object") {
+        return `<td>${cell.html}</td>`;
       }
 
       return `<td>${escapeHtml(cell)}</td>`;
