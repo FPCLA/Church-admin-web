@@ -540,23 +540,20 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
           </thead>
           <tbody>
             {page.rows.map((row, index) => {
-              const isMonthStart = index > 0 && page.rows[index - 1]?.month !== row.month;
-              const isFirstMonthRow = index === 0 || isMonthStart;
+              const previousSundayRow = [...page.rows.slice(0, index)]
+                .reverse()
+                .find((candidate) => candidate.type === "sunday");
+              const isFirstMonthRow =
+                row.type === "sunday" && previousSundayRow?.month !== row.month;
+              const isMonthStart = Boolean(previousSundayRow && isFirstMonthRow);
 
               if (row.type === "special") {
                 return (
-                  <tr
-                    className={`calendar-builder-own-special-row${isMonthStart ? " calendar-builder-month-start" : ""}`}
-                    key={`special-${row.specialDate.key}`}
-                  >
-                    <td className="calendar-builder-month-label">
-                      {isFirstMonthRow ? monthLabel(row.month, isEnglish) : ""}
-                    </td>
-                    <td className="calendar-builder-sunday-date calendar-builder-special-date-label">
-                      {formatSpecialDateDate(row.specialDate.date, isEnglish)}
-                    </td>
-                    <td className="calendar-builder-note-cell" />
-                    <td className="calendar-builder-special-cell">
+                  <tr className="calendar-builder-own-special-row" key={`special-${row.specialDate.key}`}>
+                    <td className="calendar-builder-own-special-line" colSpan={4}>
+                      <span className="calendar-builder-special-date-label">
+                        {formatSpecialDateDate(row.specialDate.date, isEnglish)}
+                      </span>
                       {renderSpecialDateItem(row.specialDate, placements[row.specialDate.key] || null)}
                     </td>
                   </tr>
@@ -584,7 +581,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
                   </td>
                   <td className="calendar-builder-sunday-date">
                     {!readOnly ? <details className="calendar-builder-date-menu print:hidden">
-                      <summary>{isEnglish ? "Service options" : "聖餐／聯合禮拜"}</summary>
+                      <summary>聖/聯</summary>
                       <div className="calendar-builder-date-menu-options">
                         {(["communion", "joint_service"] as const).map((kind) => (
                           <label key={kind}>
@@ -1011,7 +1008,7 @@ function formatSpecialDateDate(isoDate: string | null, isEnglish: boolean) {
   const day = date.getUTCDate();
   const weekday = isEnglish ? weekdayEn[date.getUTCDay()] : weekdayZh[date.getUTCDay()];
 
-  return isEnglish ? `${month}/${day} (${weekday})` : `${month}/${day}（${weekday}）`;
+  return `${month}/${day} (${weekday})`;
 }
 
 function formatSpecialDateLabel(
@@ -1088,17 +1085,16 @@ function buildPreviewHtml({
   ].map((rowsForPage) =>
     rowsForPage
       .map((row, index) => {
-        const showMonth = index === 0 || rowsForPage[index - 1]?.month !== row.month;
-        const isMonthStart = index > 0 && rowsForPage[index - 1]?.month !== row.month;
+        const previousSundayRow = [...rowsForPage.slice(0, index)]
+          .reverse()
+          .find((candidate) => candidate.type === "sunday");
+        const showMonth = row.type === "sunday" && previousSundayRow?.month !== row.month;
+        const isMonthStart = Boolean(previousSundayRow && showMonth);
         const month = showMonth ? monthLabel(row.month, isEnglish) : "";
 
         if (row.type === "special") {
-          return tableRow([
-            month,
-            formatSpecialDateDate(row.specialDate.date, isEnglish),
-            "",
-            formatSpecialDateLabel(row.specialDate, placements[row.specialDate.key] || null, isEnglish),
-          ], `own-special-row${isMonthStart ? " month-start" : ""}`);
+          const line = `${formatSpecialDateDate(row.specialDate.date, isEnglish)} ${formatSpecialDateLabel(row.specialDate, placements[row.specialDate.key] || null, isEnglish)}`;
+          return `<tr class="own-special-row"><td colspan="4">${escapeHtml(line)}</td></tr>`;
         }
 
         const sortedItems = sortCalendarItems(customItemsBySunday.get(row.sunday.date) || []);
@@ -1247,9 +1243,9 @@ function buildPreviewHtml({
     tbody td:nth-child(1) { padding-right: 2px; text-align: right; }
     tbody td:nth-child(2) { padding-left: 4px; text-align: left; }
     tbody td:nth-child(3) { white-space: pre-wrap; }
-    .own-special-row td:nth-child(2),
-    .own-special-row td:nth-child(4) {
-      text-align: center;
+    .own-special-row td {
+      text-align: center !important;
+      white-space: nowrap;
     }
     .month-start td {
       border-top: 3px double #334155;

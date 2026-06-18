@@ -442,10 +442,17 @@ a {
   background: #fff7ed;
 }
 
-.calendar-builder-own-special-row .calendar-builder-special-cell,
-.calendar-builder-own-special-row .calendar-builder-special-item {
+.calendar-builder-own-special-line {
+  align-items: center;
+  display: flex;
+  gap: 8px;
   justify-content: center;
   text-align: center;
+  white-space: nowrap;
+}
+
+.calendar-builder-own-special-row .calendar-builder-special-item {
+  justify-content: center;
 }
 
 .calendar-builder-special-date-label {
