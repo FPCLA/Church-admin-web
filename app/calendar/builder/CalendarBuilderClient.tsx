@@ -1300,6 +1300,8 @@ function buildPreviewHtml({
       color: #0f172a;
       font-family: Arial, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
       margin: 0;
+      max-width: 100%;
+      overflow-x: hidden;
       padding: 24px;
     }
     .actions {
@@ -1326,7 +1328,7 @@ function buildPreviewHtml({
       flex-direction: column;
       font-family: "Times New Roman", "PMingLiU", Arial, sans-serif;
       margin: 0 auto 24px;
-      max-width: 8.5in;
+      max-width: min(8.5in, 100%);
       min-height: 10in;
       padding: 0.45in 0.55in;
       font-size: 12pt;
@@ -1352,6 +1354,7 @@ function buildPreviewHtml({
     }
     table {
       border-collapse: collapse;
+      max-width: 100%;
       table-layout: fixed;
       width: 100%;
     }
@@ -1389,14 +1392,32 @@ function buildPreviewHtml({
     tbody td:nth-child(1) { padding-left: 2px; text-align: left; }
     tbody td:nth-child(2) { padding-left: 4px; text-align: left; }
     tbody td:nth-child(3) { white-space: pre-wrap; }
-    tbody td:nth-child(4) { white-space: nowrap; }
+    tbody td:nth-child(4) {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      white-space: normal;
+      word-break: break-word;
+    }
     .preview-right-items {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
       text-align: right;
-      white-space: nowrap;
+      width: 100%;
+    }
+    .preview-right-items > div {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      text-align: right;
+      white-space: normal;
+      width: 100%;
+      word-break: break-word;
     }
     .own-special-row td {
       text-align: center !important;
-      white-space: nowrap;
+      overflow-wrap: anywhere;
+      white-space: normal;
+      word-break: break-word;
     }
     .month-start td {
       border-top: 3px double #334155;

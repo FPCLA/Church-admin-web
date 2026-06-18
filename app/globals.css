@@ -51,18 +51,27 @@ a {
     sans-serif;
   margin: 0 auto;
   max-width: 8.5in;
+  min-width: 0;
+  overflow-x: hidden;
   padding: 0.45in 0.55in;
+  width: 100%;
 }
 
 .calendar-builder-workspace {
   display: grid;
   gap: 24px;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .calendar-builder-editor-page {
   display: flex;
   flex-direction: column;
+  max-width: 100%;
   min-height: 10in;
+  min-width: 0;
+  overflow-x: hidden;
   width: 100%;
 }
 
@@ -157,11 +166,14 @@ a {
 }
 
 .calendar-builder-linear-wrap {
-  overflow-x: auto;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .calendar-builder-linear {
   border-collapse: collapse;
+  max-width: 100%;
   table-layout: fixed;
   width: 100%;
 }
@@ -199,9 +211,12 @@ a {
 
 .calendar-builder-linear th:nth-child(4),
 .calendar-builder-linear td:nth-child(4) {
+  min-width: 0;
+  overflow-wrap: anywhere;
   text-align: right;
-  white-space: nowrap;
+  white-space: normal;
   width: 18%;
+  word-break: break-word;
 }
 
 .calendar-builder-linear tbody td:first-child {
@@ -367,6 +382,13 @@ a {
   gap: 4px;
 }
 
+.calendar-builder-special-cell {
+  justify-items: end;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .calendar-builder-custom-item,
 .calendar-builder-special-item {
   align-items: center;
@@ -376,17 +398,26 @@ a {
 }
 
 .calendar-builder-special-item {
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   justify-content: flex-end;
-  white-space: nowrap;
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  width: 100%;
 }
 
 .calendar-builder-special-item > span:first-child {
-  flex: 0 0 auto;
+  flex: 1 1 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .calendar-builder-special-item .calendar-builder-special-actions {
-  flex-wrap: nowrap;
+  justify-content: flex-end;
+  max-width: 100%;
 }
 
 .calendar-builder-custom-item > button {
@@ -795,7 +826,8 @@ a {
   }
 
   .calendar-builder-linear {
-    min-width: 900px;
+    min-width: 0;
+    width: 100%;
   }
 
   .calendar-builder-theme-grid,
