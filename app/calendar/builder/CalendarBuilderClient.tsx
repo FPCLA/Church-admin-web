@@ -453,11 +453,14 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
     );
   }
 
+  const editorPages = [
+    { firstMonth: 1, lastMonth: 6, rows: displayRows.filter((row) => row.month <= 6) },
+    { firstMonth: 7, lastMonth: 12, rows: displayRows.filter((row) => row.month >= 7) },
+  ];
+
   return (
-    <section
-      className={`calendar-builder-sheet bg-white text-slate-950${readOnly ? " calendar-builder-read-only" : ""}`}
-    >
-      {!readOnly ? <div className="calendar-builder-toolbar print:hidden">
+    <div className="calendar-builder-workspace text-slate-950">
+      <div className="calendar-builder-toolbar print:hidden">
         <div className="calendar-builder-save-panel">
           <button className="calendar-builder-primary-action" onClick={saveCalendar} type="button">
             {isEnglish ? "Save" : "儲存"}
@@ -483,7 +486,13 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
           setTheme={setTheme}
           theme={theme}
         />
-      </div> : null}
+      </div>
+
+      {editorPages.map((page) => (
+      <section
+        className="calendar-builder-sheet calendar-builder-editor-page bg-white"
+        key={page.firstMonth}
+      >
 
       <header className="calendar-builder-title">
         <h2>
@@ -504,8 +513,8 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
             </tr>
           </thead>
           <tbody>
-            {displayRows.map((row, index) => {
-              const isFirstMonthRow = index === 0 || displayRows[index - 1]?.month !== row.month;
+            {page.rows.map((row, index) => {
+              const isFirstMonthRow = index === 0 || page.rows[index - 1]?.month !== row.month;
 
               if (row.type === "special") {
                 return (
@@ -682,13 +691,19 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
         </table>
       </div>
       <footer className="calendar-builder-footnote">
-        <CalendarElderFooter elders={elders} firstMonth={1} lastMonth={12} />
+        <CalendarElderFooter
+          elders={elders}
+          firstMonth={page.firstMonth}
+          lastMonth={page.lastMonth}
+        />
         <div className="calendar-builder-joint-legend">
           <div>「 * 」 代表聯合禮拜</div>
           <div>「 * 」 denotes Joint Service</div>
         </div>
       </footer>
-    </section>
+      </section>
+      ))}
+    </div>
   );
 
   function renderSpecialDateItem(specialDate: CalendarSpecialDate, placedSundayDate: string | null) {
@@ -1023,7 +1038,7 @@ function buildPreviewHtml({
 
   const pages = pageRows
     .map(
-      (rows) => `<main class="sheet">
+      (rows, pageIndex) => `<main class="sheet">
     <header class="title">
       <h1>${annualCalendar.year} ${isEnglish ? "FPCLA Calendar" : "年洛杉磯台灣基督長老教會行事曆"} <span>FPCLA Calendar</span></h1>
       <p><strong>${isEnglish ? "Theme:" : "主題："}</strong> ${escapeHtml(theme.contentZh)}${themeReference(theme, false) ? `（${escapeHtml(themeReference(theme, false))}）` : ""}</p>
@@ -1041,7 +1056,7 @@ function buildPreviewHtml({
       <tbody>${rows}</tbody>
     </table>
     <footer class="footnote">
-      ${elderFooterHtml(elders, 1, 12)}
+      ${elderFooterHtml(elders, pageIndex === 0 ? 1 : 7, pageIndex === 0 ? 6 : 12)}
       <div class="joint-legend">
         <div>「 * 」 代表聯合禮拜</div>
         <div>「 * 」 denotes Joint Service</div>

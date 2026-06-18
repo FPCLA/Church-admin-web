@@ -54,6 +54,23 @@ a {
   padding: 0.45in 0.55in;
 }
 
+.calendar-builder-workspace {
+  display: grid;
+  gap: 24px;
+}
+
+.calendar-builder-editor-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 10in;
+  width: 100%;
+}
+
+.calendar-builder-editor-page .calendar-builder-footnote {
+  margin-top: auto;
+  padding-top: 20px;
+}
+
 .calendar-builder-toolbar {
   background: #f8fafc;
   border: 1px solid #cbd5e1;
@@ -61,8 +78,10 @@ a {
   display: grid;
   font-family: Arial, "Microsoft JhengHei", sans-serif;
   gap: 8px;
-  margin-bottom: 14px;
+  margin: 0 auto 14px;
+  max-width: 8.5in;
   padding: 10px;
+  width: 100%;
 }
 
 .calendar-builder-save-panel {
@@ -693,6 +712,14 @@ a {
 @media (max-width: 900px) {
   .calendar-builder-sheet {
     padding: 16px;
+  }
+
+  .calendar-builder-editor-page {
+    break-after: page;
+  }
+
+  .calendar-builder-editor-page:last-child {
+    break-after: auto;
   }
 
   .calendar-builder-linear {
