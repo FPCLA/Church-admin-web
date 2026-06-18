@@ -336,6 +336,32 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
     }
   }
 
+  function moveCustomItemWithinDate(id: string, direction: -1 | 1) {
+    setCustomItems((current) => {
+      const item = current.find((candidate) => candidate.id === id);
+      if (!item) {
+        return current;
+      }
+
+      const peers = current.filter(
+        (candidate) =>
+          candidate.sundayDate === item.sundayDate &&
+          calendarItemPriority(candidate) === calendarItemPriority(item),
+      );
+      const peerIndex = peers.findIndex((candidate) => candidate.id === id);
+      const targetPeer = peers[peerIndex + direction];
+      if (!targetPeer) {
+        return current;
+      }
+
+      const itemIndex = current.findIndex((candidate) => candidate.id === id);
+      const targetIndex = current.findIndex((candidate) => candidate.id === targetPeer.id);
+      const next = [...current];
+      [next[itemIndex], next[targetIndex]] = [next[targetIndex], next[itemIndex]];
+      return next;
+    });
+  }
+
   function deleteCustomItem(id: string) {
     setCustomItems((current) => current.filter((item) => item.id !== id));
   }
@@ -599,6 +625,28 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
                             {calendarItemText(item)}
                           </button>}
                           {!readOnly ? <span className="calendar-builder-special-actions print:hidden">
+                            {!isPresetItem(item, "joint_service") && !isPresetItem(item, "communion") ? <>
+                              <button
+                                disabled={!canMoveCalendarItem(customItems, item, -1)}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  moveCustomItemWithinDate(item.id, -1);
+                                }}
+                                type="button"
+                              >
+                                {isEnglish ? "Up" : "上移"}
+                              </button>
+                              <button
+                                disabled={!canMoveCalendarItem(customItems, item, 1)}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  moveCustomItemWithinDate(item.id, 1);
+                                }}
+                                type="button"
+                              >
+                                {isEnglish ? "Down" : "下移"}
+                              </button>
+                            </> : null}
                             <button
                               onClick={(event) => {
                                 event.stopPropagation();
@@ -891,7 +939,7 @@ function presetText(kind: PresetKind, isEnglish: boolean) {
 }
 
 function presetCalendarText(kind: PresetKind) {
-  return kind === "joint_service" ? "「 * 」" : "(聖餐禮 Holy Communion)";
+  return kind === "joint_service" ? "*" : "(聖餐禮 Holy Communion)";
 }
 
 function isPresetItem(item: CustomCalendarItem, kind: PresetKind) {
@@ -900,6 +948,7 @@ function isPresetItem(item: CustomCalendarItem, kind: PresetKind) {
     item.text === presetText(kind, true) ||
     item.text === presetText(kind, false) ||
     (kind === "joint_service" && item.text === "*") ||
+    (kind === "joint_service" && item.text === "「 * 」") ||
     item.text === presetCalendarText(kind)
   );
 }
@@ -934,6 +983,16 @@ function calendarItemPriority(item: CustomCalendarItem) {
   }
 
   return 2;
+}
+
+function canMoveCalendarItem(items: CustomCalendarItem[], item: CustomCalendarItem, direction: -1 | 1) {
+  const peers = items.filter(
+    (candidate) =>
+      candidate.sundayDate === item.sundayDate &&
+      calendarItemPriority(candidate) === calendarItemPriority(item),
+  );
+  const index = peers.findIndex((candidate) => candidate.id === item.id);
+  return Boolean(peers[index + direction]);
 }
 
 function formatSundayDay(isoDate: string, isEnglish: boolean) {
@@ -1042,7 +1101,10 @@ function buildPreviewHtml({
           ], `own-special-row${isMonthStart ? " month-start" : ""}`);
         }
 
-        const customItems = sortCalendarItems(customItemsBySunday.get(row.sunday.date) || [])
+        const sortedItems = sortCalendarItems(customItemsBySunday.get(row.sunday.date) || []);
+        const hasJointService = sortedItems.some((item) => isPresetItem(item, "joint_service"));
+        const customItems = sortedItems
+          .filter((item) => !isPresetItem(item, "joint_service"))
           .map(calendarItemText)
           .join("  ");
         const specialItems = (specialDatesBySunday.get(row.sunday.date) || []).map((specialDate) =>
@@ -1051,7 +1113,7 @@ function buildPreviewHtml({
 
         return tableRow([
           month,
-          formatSundayDay(row.sunday.date, isEnglish),
+          `${formatSundayDay(row.sunday.date, isEnglish)}${hasJointService ? "*" : ""}`,
           customItems,
           specialItems,
         ], isMonthStart ? "month-start" : "");

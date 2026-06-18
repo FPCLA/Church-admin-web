@@ -278,10 +278,11 @@ a {
   box-shadow: 0 4px 12px rgb(15 23 42 / 16%);
   display: grid;
   gap: 5px;
-  left: 0;
+  left: auto;
   min-width: 118px;
   padding: 7px;
   position: absolute;
+  right: 0;
   top: calc(100% + 2px);
   z-index: 10;
 }
