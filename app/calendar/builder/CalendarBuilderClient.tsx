@@ -1199,6 +1199,7 @@ function buildPreviewHtml({
   specialDatesBySunday: Map<string, CalendarSpecialDate[]>;
   theme: CalendarTheme;
 }) {
+  const exportBaseName = `FPCLA-${annualCalendar.year}-行事曆`;
   const pageRows = [
     displayRows.filter((row) => row.month <= 6),
     displayRows.filter((row) => row.month >= 7),
@@ -1299,6 +1300,7 @@ function buildPreviewHtml({
       max-width: 8.5in;
       min-height: 10in;
       padding: 0.45in 0.55in;
+      font-size: 12pt;
     }
     .title {
       border-bottom: 2px dashed #111827;
@@ -1307,13 +1309,15 @@ function buildPreviewHtml({
       text-align: center;
     }
     .title h1 {
-      font-size: 18px;
+      font-family: "Times New Roman", "PMingLiU", serif;
+      font-size: 14pt;
       font-weight: 600;
       margin: 0 0 26px;
     }
     .title p {
       color: #334155;
-      font-size: 13px;
+      font-family: "Times New Roman", "PMingLiU", serif;
+      font-size: 14pt;
       font-weight: 700;
       margin: 0;
     }
@@ -1325,13 +1329,13 @@ function buildPreviewHtml({
     th {
       background: #f8fafc;
       border-bottom: 2px solid #334155;
-      font-size: 13px;
+      font-size: 12pt;
       padding: 5px 6px;
       text-align: left;
     }
     td {
       border-bottom: 1px solid #475569;
-      font-size: 15px;
+      font-size: 12pt;
       line-height: 1.25;
       min-height: 34px;
       padding: 5px 6px;
@@ -1351,7 +1355,7 @@ function buildPreviewHtml({
     th:nth-child(4), td:nth-child(4) {
       text-align: right;
     }
-    th:nth-child(1), td:nth-child(1) { font-size: 13px; white-space: pre; }
+    th:nth-child(1), td:nth-child(1) { font-size: 12pt; white-space: pre; }
     tbody td:nth-child(1) { padding-left: 2px; text-align: left; }
     tbody td:nth-child(2) { padding-left: 4px; text-align: left; }
     tbody td:nth-child(3) { white-space: pre-wrap; }
@@ -1368,7 +1372,7 @@ function buildPreviewHtml({
     }
     .footnote {
       font-family: Arial, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
-      font-size: 12px;
+      font-size: 12pt;
       line-height: 1.5;
       margin-top: auto;
       padding-top: 12px;
@@ -1403,8 +1407,56 @@ function buildPreviewHtml({
   </style>
 </head>
 <body>
-  <div class="actions"><button onclick="window.print()">${isEnglish ? "Print" : "列印"}</button></div>
+  <div class="actions">
+    <button onclick="exportWord()">${isEnglish ? "Export Word" : "匯出 Word"}</button>
+    <button onclick="exportPdf()">${isEnglish ? "Export PDF" : "匯出 PDF"}</button>
+    <button onclick="window.print()">${isEnglish ? "Print" : "列印"}</button>
+  </div>
   ${pages}
+  <script>
+    const exportBaseName = ${JSON.stringify(exportBaseName)};
+
+    async function saveBlob(blob, fileName) {
+      if ("showSaveFilePicker" in window) {
+        try {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: fileName,
+            startIn: "documents",
+            types: [{
+              description: "Microsoft Word document",
+              accept: { "application/msword": [".doc"] }
+            }]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          return;
+        } catch (error) {
+          if (error && error.name === "AbortError") return;
+        }
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportWord() {
+      const clone = document.documentElement.cloneNode(true);
+      clone.querySelectorAll(".actions, script").forEach((element) => element.remove());
+      const wordHtml = "<!doctype html>" + clone.outerHTML;
+      const blob = new Blob([wordHtml], { type: "application/msword;charset=utf-8" });
+      saveBlob(blob, exportBaseName + ".doc");
+    }
+
+    function exportPdf() {
+      document.title = exportBaseName;
+      window.print();
+    }
+  </script>
 </body>
 </html>`;
 }

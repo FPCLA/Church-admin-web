@@ -253,7 +253,8 @@ a {
   font-size: 11px;
   margin-bottom: 3px;
   position: relative;
-  width: 100%;
+  margin-left: auto;
+  width: max-content;
 }
 
 .calendar-builder-date-menu summary {
