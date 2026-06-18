@@ -399,6 +399,30 @@ a {
   width: 100%;
 }
 
+.calendar-builder-note-editor > select,
+.calendar-builder-item-editor > select,
+.calendar-builder-item-editor textarea {
+  background: white;
+  border: 1px solid #93c5fd;
+  border-radius: 4px;
+  color: #0f172a;
+  font: inherit;
+  padding: 6px;
+  width: 100%;
+}
+
+.calendar-builder-item-editor {
+  display: grid;
+  flex: 1 1 100%;
+  gap: 4px;
+  width: 100%;
+}
+
+.calendar-builder-item-editor textarea {
+  min-height: 58px;
+  resize: vertical;
+}
+
 .calendar-builder-editor-actions,
 .calendar-builder-special-actions {
   align-items: center;

@@ -24,7 +24,9 @@ type CalendarBuilderClientProps = {
 type SpecialPlacement = string | null;
 type PlacementState = Record<string, SpecialPlacement>;
 type DraftState = Record<string, string>;
+type DraftFellowshipState = Record<string, FellowshipName | "">;
 type PresetKind = "joint_service" | "communion";
+type FellowshipName = (typeof fellowshipOptions)[number];
 
 type AnnualDetailsState = {
   elders: ElderAssignment[];
@@ -32,6 +34,7 @@ type AnnualDetailsState = {
 };
 
 type CustomCalendarItem = {
+  fellowship?: FellowshipName;
   id: string;
   sundayDate: string;
   text: string;
@@ -55,6 +58,16 @@ type DisplayRow =
     };
 
 const ownRowPlacement = "__own_row__";
+const fellowshipOptions = [
+  "小會",
+  "執事會",
+  "長青團契",
+  "婦女團契",
+  "英語部",
+  "聖歌隊",
+  "手鐘團",
+  "主日學",
+] as const;
 const emptyTheme: CalendarTheme = {
   bookId: "",
   chapter: "",
@@ -68,7 +81,11 @@ const weekdayEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = false }: CalendarBuilderClientProps) {
   const [activeDate, setActiveDate] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<DraftState>({});
+  const [draftFellowships, setDraftFellowships] = useState<DraftFellowshipState>({});
   const [customItems, setCustomItems] = useState<CustomCalendarItem[]>([]);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingItemText, setEditingItemText] = useState("");
+  const [editingItemFellowship, setEditingItemFellowship] = useState<FellowshipName | "">("");
   const [elders, setElders] = useState<ElderAssignment[]>([
     { id: "elder-1", months: [], name: "" },
   ]);
@@ -86,6 +103,8 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
     const timeout = window.setTimeout(() => {
       setActiveDate(null);
       setDrafts({});
+      setDraftFellowships({});
+      setEditingItemId(null);
       setCustomItems(readStorage<CustomCalendarItem[]>(customItemsStorageKey, []));
       setPlacements(readStorage<PlacementState>(placementStorageKey, initialPlacements(annualCalendar)));
       const annualDetails = readStorage<AnnualDetailsState>(annualDetailsStorageKey, {
@@ -253,9 +272,17 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
     }));
   }
 
+  function updateDraftFellowship(date: string, value: string) {
+    setDraftFellowships((current) => ({
+      ...current,
+      [date]: isFellowshipName(value) ? value : "",
+    }));
+  }
+
   function saveDraft(date: string) {
-    const text = drafts[date]?.trim();
-    if (!text) {
+    const text = drafts[date]?.trim() || "";
+    const fellowship = draftFellowships[date] || "";
+    if (!text && !fellowship) {
       clearDraftAndClose(date);
       return;
     }
@@ -263,6 +290,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
     setCustomItems((current) => [
       ...current,
       {
+        fellowship: fellowship || undefined,
         id: `${date}-${Date.now()}`,
         kind: "custom",
         sundayDate: date,
@@ -277,7 +305,48 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
       ...current,
       [date]: "",
     }));
+    setDraftFellowships((current) => ({
+      ...current,
+      [date]: "",
+    }));
     setActiveDate(null);
+  }
+
+  function beginEditCalendarItem(item: CustomCalendarItem) {
+    if (isPresetItem(item, "joint_service") || isPresetItem(item, "communion")) {
+      return;
+    }
+
+    setEditingItemId(item.id);
+    setEditingItemText(item.text);
+    setEditingItemFellowship(item.fellowship || "");
+  }
+
+  function saveCalendarItemEdit() {
+    if (!editingItemId) {
+      return;
+    }
+
+    const text = editingItemText.trim();
+    if (!text && !editingItemFellowship) {
+      setStatusMessage(isEnglish ? "Enter content or select a fellowship." : "請輸入內容或選擇團契。");
+      return;
+    }
+
+    setCustomItems((current) =>
+      current.map((item) =>
+        item.id === editingItemId
+          ? { ...item, fellowship: editingItemFellowship || undefined, text }
+          : item,
+      ),
+    );
+    cancelCalendarItemEdit();
+  }
+
+  function cancelCalendarItemEdit() {
+    setEditingItemId(null);
+    setEditingItemText("");
+    setEditingItemFellowship("");
   }
 
   function setDatePreset(sundayDate: string, kind: PresetKind, checked: boolean) {
@@ -610,18 +679,54 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
                     <div className="calendar-builder-custom-items">
                       {sortCalendarItems(customItemsBySunday.get(sunday.date) || []).map((item) => (
                         <div className="calendar-builder-custom-item" key={item.id}>
-                          {readOnly ? (
+                          {editingItemId === item.id ? (
+                            <div
+                              className="calendar-builder-item-editor"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <select
+                                aria-label={isEnglish ? "Fellowship" : "團契"}
+                                onChange={(event) =>
+                                  setEditingItemFellowship(
+                                    isFellowshipName(event.target.value) ? event.target.value : "",
+                                  )
+                                }
+                                value={editingItemFellowship}
+                              >
+                                <option value="">{isEnglish ? "Fellowship (optional)" : "團契（選填）"}</option>
+                                {fellowshipOptions.map((fellowship) => (
+                                  <option key={fellowship} value={fellowship}>{fellowship}</option>
+                                ))}
+                              </select>
+                              <textarea
+                                autoFocus
+                                onChange={(event) => setEditingItemText(event.target.value)}
+                                value={editingItemText}
+                              />
+                              <div className="calendar-builder-editor-actions">
+                                <button onClick={saveCalendarItemEdit} type="button">
+                                  {isEnglish ? "Save" : "儲存"}
+                                </button>
+                                <button onClick={cancelCalendarItemEdit} type="button">
+                                  {isEnglish ? "Cancel" : "取消"}
+                                </button>
+                              </div>
+                            </div>
+                          ) : readOnly ? (
                             <span>{calendarItemText(item)}</span>
                           ) : <button
                             draggable={!readOnly}
+                            onClick={(event) => event.stopPropagation()}
+                            onDoubleClick={() => beginEditCalendarItem(item)}
                             onDragStart={(event) => {
                               event.dataTransfer.setData("text/calendar-custom-item", item.id);
                             }}
+                            title={isEnglish ? "Double-click to edit" : "雙擊編輯"}
                             type="button"
                           >
                             {calendarItemText(item)}
                           </button>}
-                          {!readOnly ? <span className="calendar-builder-special-actions print:hidden">
+                          {!readOnly && editingItemId !== item.id ? <span className="calendar-builder-special-actions print:hidden">
                             {!isPresetItem(item, "joint_service") && !isPresetItem(item, "communion") ? <>
                               <button
                                 disabled={!canMoveCalendarItem(customItems, item, -1)}
@@ -689,6 +794,17 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
                     </div>
                     {isEditing ? (
                       <div className="calendar-builder-note-editor" ref={editorRef}>
+                        <select
+                          aria-label={isEnglish ? "Fellowship" : "團契"}
+                          onChange={(event) => updateDraftFellowship(sunday.date, event.target.value)}
+                          onClick={(event) => event.stopPropagation()}
+                          value={draftFellowships[sunday.date] || ""}
+                        >
+                          <option value="">{isEnglish ? "Fellowship (optional)" : "團契（選填）"}</option>
+                          {fellowshipOptions.map((fellowship) => (
+                            <option key={fellowship} value={fellowship}>{fellowship}</option>
+                          ))}
+                        </select>
                         <textarea
                           autoFocus
                           onChange={(event) => updateDraft(sunday.date, event.target.value)}
@@ -954,6 +1070,10 @@ function hasDatePreset(items: CustomCalendarItem[], sundayDate: string, kind: Pr
   return items.some((item) => item.sundayDate === sundayDate && isPresetItem(item, kind));
 }
 
+function isFellowshipName(value: string): value is FellowshipName {
+  return fellowshipOptions.includes(value as FellowshipName);
+}
+
 function calendarItemText(item: CustomCalendarItem) {
   if (isPresetItem(item, "joint_service")) {
     return presetCalendarText("joint_service");
@@ -963,7 +1083,7 @@ function calendarItemText(item: CustomCalendarItem) {
     return presetCalendarText("communion");
   }
 
-  return item.text;
+  return `${item.fellowship || ""}${item.text}`;
 }
 
 function sortCalendarItems(items: CustomCalendarItem[]) {
