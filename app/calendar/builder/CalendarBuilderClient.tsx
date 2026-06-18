@@ -2,6 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CalendarSpecialDate, CalendarSunday } from "@/lib/phase3/calendar-builder";
+import {
+  CalendarAnnualDetails,
+  type CalendarTheme,
+  type ElderAssignment,
+} from "./CalendarAnnualDetails";
+import { bibleBook, calendarMonths } from "./calendar-options";
 
 type AnnualCalendar = {
   specialDates: CalendarSpecialDate[];
@@ -19,6 +25,11 @@ type SpecialPlacement = string | null;
 type PlacementState = Record<string, SpecialPlacement>;
 type DraftState = Record<string, string>;
 type PresetKind = "joint_service" | "communion";
+
+type AnnualDetailsState = {
+  elders: ElderAssignment[];
+  theme: CalendarTheme;
+};
 
 type CustomCalendarItem = {
   id: string;
@@ -44,6 +55,13 @@ type DisplayRow =
     };
 
 const ownRowPlacement = "__own_row__";
+const emptyTheme: CalendarTheme = {
+  bookId: "",
+  chapter: "",
+  contentEn: "",
+  contentZh: "",
+  verse: "",
+};
 const weekdayZh = ["日", "一", "二", "三", "四", "五", "六"];
 const weekdayEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -51,13 +69,18 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
   const [activeDate, setActiveDate] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<DraftState>({});
   const [customItems, setCustomItems] = useState<CustomCalendarItem[]>([]);
+  const [elders, setElders] = useState<ElderAssignment[]>([
+    { id: "elder-1", months: [], name: "" },
+  ]);
   const [placements, setPlacements] = useState<PlacementState>(() => initialPlacements(annualCalendar));
+  const [theme, setTheme] = useState<CalendarTheme>(emptyTheme);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const editorRef = useRef<HTMLDivElement | null>(null);
   const customItemsStorageKey = `calendar-builder-custom-items-${annualCalendar.year}`;
   const placementStorageKey = `calendar-builder-placements-${annualCalendar.year}`;
+  const annualDetailsStorageKey = `calendar-builder-annual-details-${annualCalendar.year}`;
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -65,12 +88,18 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
       setDrafts({});
       setCustomItems(readStorage<CustomCalendarItem[]>(customItemsStorageKey, []));
       setPlacements(readStorage<PlacementState>(placementStorageKey, initialPlacements(annualCalendar)));
+      const annualDetails = readStorage<AnnualDetailsState>(annualDetailsStorageKey, {
+        elders: [{ id: "elder-1", months: [], name: "" }],
+        theme: emptyTheme,
+      });
+      setElders(annualDetails.elders);
+      setTheme(annualDetails.theme);
       setSavedAt(window.localStorage.getItem(saveTimeStorageKey(annualCalendar.year)));
       setIsStorageLoaded(true);
     }, 0);
 
     return () => window.clearTimeout(timeout);
-  }, [annualCalendar, customItemsStorageKey, placementStorageKey]);
+  }, [annualCalendar, annualDetailsStorageKey, customItemsStorageKey, placementStorageKey]);
 
   useEffect(() => {
     if (!isStorageLoaded) {
@@ -87,6 +116,14 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
 
     window.localStorage.setItem(placementStorageKey, JSON.stringify(placements));
   }, [isStorageLoaded, placementStorageKey, placements]);
+
+  useEffect(() => {
+    if (!isStorageLoaded) {
+      return;
+    }
+
+    window.localStorage.setItem(annualDetailsStorageKey, JSON.stringify({ elders, theme }));
+  }, [annualDetailsStorageKey, elders, isStorageLoaded, theme]);
 
   useEffect(() => {
     function closeDateMenus(event: MouseEvent | TouchEvent) {
@@ -357,6 +394,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
     const nextSavedAt = new Date().toLocaleString(isEnglish ? "en-US" : "zh-TW");
     window.localStorage.setItem(customItemsStorageKey, JSON.stringify(customItems));
     window.localStorage.setItem(placementStorageKey, JSON.stringify(placements));
+    window.localStorage.setItem(annualDetailsStorageKey, JSON.stringify({ elders, theme }));
     window.localStorage.setItem(saveTimeStorageKey(annualCalendar.year), nextSavedAt);
     setSavedAt(nextSavedAt);
     setStatusMessage(isEnglish ? "Calendar saved." : "行事曆已儲存。");
@@ -376,9 +414,11 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
         annualCalendar,
         customItemsBySunday,
         displayRows,
+        elders,
         isEnglish,
         placements,
         specialDatesBySunday,
+        theme,
       }),
     );
     previewWindow.document.close();
@@ -397,9 +437,11 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
           annualCalendar,
           customItemsBySunday,
           displayRows,
+          elders,
           isEnglish,
           placements,
           specialDatesBySunday,
+          theme,
         })}
         title={`${annualCalendar.year} ${isEnglish ? "calendar preview" : "行事曆預覽"}`}
       />
@@ -412,10 +454,10 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
     >
       {!readOnly ? <div className="calendar-builder-toolbar print:hidden">
         <div className="calendar-builder-save-panel">
-          <button onClick={saveCalendar} type="button">
+          <button className="calendar-builder-primary-action" onClick={saveCalendar} type="button">
             {isEnglish ? "Save" : "儲存"}
           </button>
-          <button onClick={openPreview} type="button">
+          <button className="calendar-builder-primary-action" onClick={openPreview} type="button">
             {isEnglish ? "Preview" : "預覽"}
           </button>
           <span>
@@ -436,7 +478,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
           {annualCalendar.year} {isEnglish ? "FPCLA Calendar" : "年洛杉磯台灣基督長老教會行事曆"}{" "}
           <span>FPCLA Calendar</span>
         </h2>
-        <p>{isEnglish ? "Theme:" : "主題："}</p>
+        <CalendarThemeDisplay isEnglish={isEnglish} theme={theme} />
       </header>
 
       <div className="calendar-builder-linear-wrap">
@@ -447,6 +489,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
               <th>{isEnglish ? "Sunday" : "主日"}</th>
               <th>{isEnglish ? "Church calendar" : "教會行事"}</th>
               <th>{readOnly ? "" : isEnglish ? "Special dates / holidays" : "特殊日子 / 節日"}</th>
+              <th>{isEnglish ? "Elder in charge" : "值星長老"}</th>
             </tr>
           </thead>
           <tbody>
@@ -465,6 +508,9 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
                     <td className="calendar-builder-note-cell" />
                     <td className="calendar-builder-special-cell">
                       {renderSpecialDateItem(row.specialDate, placements[row.specialDate.key] || null)}
+                    </td>
+                    <td className="calendar-builder-elder-cell">
+                      {isFirstMonthRow ? elderForMonth(elders, row.month) : ""}
                     </td>
                   </tr>
                 );
@@ -621,6 +667,9 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
                       renderSpecialDateItem(specialDate, placements[specialDate.key] || null),
                     )}
                   </td>
+                  <td className="calendar-builder-elder-cell">
+                    {isFirstMonthRow ? elderForMonth(elders, row.month) : ""}
+                  </td>
                 </tr>
               );
             })}
@@ -631,6 +680,13 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
         <div>「 * 」 代表聯合禮拜</div>
         <div>「 * 」 denotes Joint Service</div>
       </footer>
+      <CalendarAnnualDetails
+        elders={elders}
+        isEnglish={isEnglish}
+        setElders={setElders}
+        setTheme={setTheme}
+        theme={theme}
+      />
     </section>
   );
 
@@ -685,6 +741,69 @@ function initialPlacements(annualCalendar: AnnualCalendar) {
   return Object.fromEntries(
     annualCalendar.specialDates.map((specialDate) => [specialDate.key, specialDate.sundayDate]),
   );
+}
+
+function CalendarThemeDisplay({ isEnglish, theme }: { isEnglish: boolean; theme: CalendarTheme }) {
+  const reference = themeReference(theme, false);
+  const referenceEn = themeReference(theme, true);
+
+  return (
+    <div className="calendar-builder-theme-display">
+      <p>
+        <strong>{isEnglish ? "Theme:" : "主題："}</strong>{" "}
+        {theme.contentZh || (isEnglish ? "Not entered" : "尚未輸入")}
+        {reference ? `（${reference}）` : ""}
+      </p>
+      {theme.contentEn ? (
+        <p>
+          <strong>Theme:</strong> {theme.contentEn}{referenceEn ? ` (${referenceEn})` : ""}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function themeReference(theme: CalendarTheme, english: boolean) {
+  const book = bibleBook(theme.bookId);
+  if (!book) {
+    return "";
+  }
+
+  const bookName = english ? book[2] : book[1];
+  if (!theme.chapter) {
+    return bookName;
+  }
+
+  return english
+    ? `${bookName} ${theme.chapter}${theme.verse ? `:${theme.verse}` : ""}`
+    : `${bookName} ${theme.chapter}章${theme.verse ? `${theme.verse}節` : ""}`;
+}
+
+function elderForMonth(elders: ElderAssignment[], month: number) {
+  return elders.find((elder) => elder.months.includes(month))?.name.trim() || "";
+}
+
+function elderSummary(elders: ElderAssignment[], firstMonth: number, lastMonth: number, isEnglish: boolean) {
+  const assignments = elders
+    .map((elder) => ({
+      ...elder,
+      months: elder.months.filter((month) => month >= firstMonth && month <= lastMonth),
+    }))
+    .filter((elder) => elder.name.trim() && elder.months.length)
+    .map((elder) => {
+      const months = elder.months
+        .map((month) => calendarMonths.find(([value]) => value === month))
+        .filter((month): month is (typeof calendarMonths)[number] => Boolean(month))
+        .map((month) => isEnglish ? month[2] : month[1])
+        .join(isEnglish ? ", " : "、");
+      return `${elder.name.trim()} (${months})`;
+    });
+
+  if (!assignments.length) {
+    return "";
+  }
+
+  return `${isEnglish ? "Elders in charge" : "值星長老"}：${assignments.join(isEnglish ? "; " : "；")}`;
 }
 
 function readStorage<T>(key: string, fallback: T) {
@@ -828,16 +947,20 @@ function buildPreviewHtml({
   annualCalendar,
   customItemsBySunday,
   displayRows,
+  elders,
   isEnglish,
   placements,
   specialDatesBySunday,
+  theme,
 }: {
   annualCalendar: AnnualCalendar;
   customItemsBySunday: Map<string, CustomCalendarItem[]>;
   displayRows: DisplayRow[];
+  elders: ElderAssignment[];
   isEnglish: boolean;
   placements: PlacementState;
   specialDatesBySunday: Map<string, CalendarSpecialDate[]>;
+  theme: CalendarTheme;
 }) {
   const pageRows = [
     displayRows.filter((row) => row.month <= 6),
@@ -854,7 +977,8 @@ function buildPreviewHtml({
             formatSpecialDateDate(row.specialDate.date, isEnglish),
             "",
             formatSpecialDateLabel(row.specialDate, placements[row.specialDate.key] || null, isEnglish),
-          ]);
+            showMonth ? elderForMonth(elders, row.month) : "",
+          ], "own-special-row");
         }
 
         const customItems = (customItemsBySunday.get(row.sunday.date) || []).map(calendarItemText);
@@ -862,17 +986,24 @@ function buildPreviewHtml({
           formatSpecialDateLabel(specialDate, placements[specialDate.key] || null, isEnglish),
         );
 
-        return tableRow([month, formatSundayDay(row.sunday.date, isEnglish), customItems, specialItems]);
+        return tableRow([
+          month,
+          formatSundayDay(row.sunday.date, isEnglish),
+          customItems,
+          specialItems,
+          showMonth ? elderForMonth(elders, row.month) : "",
+        ]);
       })
       .join(""),
   );
 
   const pages = pageRows
     .map(
-      (rows) => `<main class="sheet">
+      (rows, pageIndex) => `<main class="sheet">
     <header class="title">
       <h1>${annualCalendar.year} ${isEnglish ? "FPCLA Calendar" : "年洛杉磯台灣基督長老教會行事曆"} <span>FPCLA Calendar</span></h1>
-      <p>${isEnglish ? "Theme:" : "主題："}</p>
+      <p><strong>${isEnglish ? "Theme:" : "主題："}</strong> ${escapeHtml(theme.contentZh)}${themeReference(theme, false) ? `（${escapeHtml(themeReference(theme, false))}）` : ""}</p>
+      ${theme.contentEn ? `<p><strong>Theme:</strong> ${escapeHtml(theme.contentEn)}${themeReference(theme, true) ? ` (${escapeHtml(themeReference(theme, true))})` : ""}</p>` : ""}
     </header>
     <table>
       <thead>
@@ -881,11 +1012,13 @@ function buildPreviewHtml({
           <th>${isEnglish ? "Sunday" : "主日"}</th>
           <th>${isEnglish ? "Church calendar" : "教會行事"}</th>
           <th aria-label="${isEnglish ? "Special dates and holidays" : "特殊日子與節日"}"></th>
+          <th>${isEnglish ? "Elder" : "值星長老"}</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
     <footer class="footnote">
+      ${elderSummary(elders, pageIndex === 0 ? 1 : 7, pageIndex === 0 ? 6 : 12, isEnglish) ? `<div class="elder-summary">${escapeHtml(elderSummary(elders, pageIndex === 0 ? 1 : 7, pageIndex === 0 ? 6 : 12, isEnglish))}</div>` : ""}
       <div>「 * 」 代表聯合禮拜</div>
       <div>「 * 」 denotes Joint Service</div>
     </footer>
@@ -973,13 +1106,24 @@ function buildPreviewHtml({
     }
     th:nth-child(1), td:nth-child(1), th:nth-child(2), td:nth-child(2) {
       text-align: center;
-      width: 14%;
+      width: 12%;
     }
-    th:nth-child(3), td:nth-child(3), th:nth-child(4), td:nth-child(4) {
-      width: 36%;
+    th:nth-child(3), td:nth-child(3) {
+      width: 32%;
+    }
+    th:nth-child(4), td:nth-child(4) {
+      width: 31%;
     }
     th:nth-child(4), td:nth-child(4) {
       text-align: right;
+    }
+    th:nth-child(5), td:nth-child(5) {
+      text-align: center;
+      width: 13%;
+    }
+    .own-special-row td:nth-child(2),
+    .own-special-row td:nth-child(4) {
+      text-align: center;
     }
     .cell-lines {
       display: grid;
@@ -992,6 +1136,10 @@ function buildPreviewHtml({
       margin-top: auto;
       padding-top: 12px;
       text-align: center;
+    }
+    .elder-summary {
+      font-weight: 700;
+      margin-bottom: 6px;
     }
     @media print {
       body { background: white; padding: 0; }
@@ -1009,8 +1157,8 @@ function buildPreviewHtml({
 </html>`;
 }
 
-function tableRow(cells: Array<string | string[]>) {
-  return `<tr>${cells
+function tableRow(cells: Array<string | string[]>, className = "") {
+  return `<tr${className ? ` class="${className}"` : ""}>${cells
     .map((cell) => {
       if (Array.isArray(cell)) {
         return `<td><div class="cell-lines">${cell.map((line) => `<div>${escapeHtml(line)}</div>`).join("")}</div></td>`;

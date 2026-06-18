@@ -27,6 +27,7 @@ export function CalendarYearControls({
 
     window.localStorage.removeItem(`calendar-builder-custom-items-${year}`);
     window.localStorage.removeItem(`calendar-builder-placements-${year}`);
+    window.localStorage.removeItem(`calendar-builder-annual-details-${year}`);
     window.localStorage.removeItem(`calendar-builder-saved-at-${year}`);
     window.location.href = `/calendar/builder?year=${year}`;
   }
