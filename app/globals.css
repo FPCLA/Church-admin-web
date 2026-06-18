@@ -160,29 +160,29 @@ a {
 .calendar-builder-linear th:first-child,
 .calendar-builder-linear td:first-child {
   text-align: center;
-  width: 12%;
+  width: 15%;
 }
 
 .calendar-builder-linear th:nth-child(2),
 .calendar-builder-linear td:nth-child(2) {
   text-align: center;
-  width: 12%;
+  width: 11%;
 }
 
 .calendar-builder-linear th:nth-child(3),
 .calendar-builder-linear td:nth-child(3) {
-  width: 32%;
+  width: 30%;
 }
 
 .calendar-builder-linear th:nth-child(4),
 .calendar-builder-linear td:nth-child(4) {
-  width: 31%;
+  width: 30%;
 }
 
 .calendar-builder-linear th:nth-child(5),
 .calendar-builder-linear td:nth-child(5) {
   text-align: center;
-  width: 13%;
+  width: 14%;
 }
 
 .calendar-builder-linear td {
@@ -200,7 +200,7 @@ a {
 }
 
 .calendar-builder-month-label {
-  font-size: 16px;
+  font-size: 14px;
   white-space: pre;
 }
 
@@ -401,7 +401,7 @@ a {
 .calendar-builder-annual-details {
   display: grid;
   gap: 18px;
-  margin-top: 28px;
+  margin-top: 10px;
 }
 
 .calendar-builder-detail-section {

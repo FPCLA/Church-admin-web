@@ -35,9 +35,9 @@ export const bibleBooks = [
 ] as const;
 
 export const calendarMonths = [
-  [1, "一月", "Jan"], [2, "二月", "Feb"], [3, "三月", "Mar"], [4, "四月", "Apr"],
-  [5, "五月", "May"], [6, "六月", "Jun"], [7, "七月", "Jul"], [8, "八月", "Aug"],
-  [9, "九月", "Sep"], [10, "十月", "Oct"], [11, "十一月", "Nov"], [12, "十二月", "Dec"],
+  [1, "一月", "Jan."], [2, "二月", "Feb."], [3, "三月", "Mar."], [4, "四月", "Apr."],
+  [5, "五月", "May."], [6, "六月", "Jun."], [7, "七月", "Jul."], [8, "八月", "Aug."],
+  [9, "九月", "Sep."], [10, "十月", "Oct."], [11, "十一月", "Nov."], [12, "十二月", "Dec."],
 ] as const;
 
 export function bibleBook(bookId: string) {

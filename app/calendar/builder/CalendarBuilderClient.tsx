@@ -128,12 +128,17 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
   useEffect(() => {
     function closeDateMenus(event: MouseEvent | TouchEvent) {
       const target = event.target;
-      if (target instanceof Element && target.closest(".calendar-builder-date-menu")) {
+      if (
+        target instanceof Element &&
+        target.closest(".calendar-builder-date-menu, .calendar-builder-month-menu")
+      ) {
         return;
       }
 
       document
-        .querySelectorAll<HTMLDetailsElement>(".calendar-builder-date-menu[open]")
+        .querySelectorAll<HTMLDetailsElement>(
+          ".calendar-builder-date-menu[open], .calendar-builder-month-menu[open]",
+        )
         .forEach((menu) => menu.removeAttribute("open"));
     }
 
@@ -471,6 +476,13 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
           </span>
         </div>
         {statusMessage ? <p>{statusMessage}</p> : null}
+        <CalendarAnnualDetails
+          elders={elders}
+          isEnglish={isEnglish}
+          setElders={setElders}
+          setTheme={setTheme}
+          theme={theme}
+        />
       </div> : null}
 
       <header className="calendar-builder-title">
@@ -680,13 +692,6 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
         <div>「 * 」 代表聯合禮拜</div>
         <div>「 * 」 denotes Joint Service</div>
       </footer>
-      <CalendarAnnualDetails
-        elders={elders}
-        isEnglish={isEnglish}
-        setElders={setElders}
-        setTheme={setTheme}
-        theme={theme}
-      />
     </section>
   );
 
@@ -926,11 +931,11 @@ function monthLabel(month: number, isEnglish: boolean) {
     return monthShort(month);
   }
 
-  return `${toChineseMonth(month)}  月`;
+  return `${toChineseMonth(month)}月 (${monthShort(month)})`;
 }
 
 function monthShort(month: number) {
-  return ["Jan.", "Feb.", "Mar.", "Apr.", "May", "Jun.", "Jul.", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."][
+  return ["Jan.", "Feb.", "Mar.", "Apr.", "May.", "Jun.", "Jul.", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."][
     month - 1
   ];
 }
@@ -1106,21 +1111,23 @@ function buildPreviewHtml({
     }
     th:nth-child(1), td:nth-child(1), th:nth-child(2), td:nth-child(2) {
       text-align: center;
-      width: 12%;
     }
+    th:nth-child(1), td:nth-child(1) { width: 15%; }
+    th:nth-child(2), td:nth-child(2) { width: 11%; }
     th:nth-child(3), td:nth-child(3) {
-      width: 32%;
+      width: 30%;
     }
     th:nth-child(4), td:nth-child(4) {
-      width: 31%;
+      width: 30%;
     }
     th:nth-child(4), td:nth-child(4) {
       text-align: right;
     }
     th:nth-child(5), td:nth-child(5) {
       text-align: center;
-      width: 13%;
+      width: 14%;
     }
+    th:nth-child(1), td:nth-child(1) { font-size: 13px; white-space: nowrap; }
     .own-special-row td:nth-child(2),
     .own-special-row td:nth-child(4) {
       text-align: center;

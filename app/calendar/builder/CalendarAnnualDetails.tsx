@@ -137,7 +137,7 @@ export function CalendarAnnualDetails({ elders, isEnglish, setElders, setTheme, 
                 <details className="calendar-builder-month-menu">
                   <summary>
                     {elder.months.length
-                      ? calendarMonths.filter(([month]) => elder.months.includes(month)).map(([, zh, en]) => isEnglish ? en : zh).join("、")
+                      ? calendarMonths.filter(([month]) => elder.months.includes(month)).map(([, zh, en]) => isEnglish ? en : `${zh} (${en})`).join("、")
                       : isEnglish ? "Select months" : "選擇月份"}
                   </summary>
                   <div>
@@ -151,7 +151,7 @@ export function CalendarAnnualDetails({ elders, isEnglish, setElders, setTheme, 
                             onChange={() => toggleMonth(elder, month)}
                             type="checkbox"
                           />
-                          <span>{isEnglish ? en : zh}</span>
+                          <span>{isEnglish ? en : `${zh} (${en})`}</span>
                         </label>
                       );
                     })}
@@ -165,7 +165,7 @@ export function CalendarAnnualDetails({ elders, isEnglish, setElders, setTheme, 
           </div>
           <aside className="calendar-builder-unassigned-months">
             <strong>{isEnglish ? "Unassigned months" : "尚未安排月份"}</strong>
-            <p>{unassignedMonths.length ? unassignedMonths.map(([, zh, en]) => isEnglish ? en : zh).join("、") : isEnglish ? "All assigned" : "已全部安排"}</p>
+            <p>{unassignedMonths.length ? unassignedMonths.map(([, zh, en]) => isEnglish ? en : `${zh} (${en})`).join("、") : isEnglish ? "All assigned" : "已全部安排"}</p>
           </aside>
         </div>
       </section>
