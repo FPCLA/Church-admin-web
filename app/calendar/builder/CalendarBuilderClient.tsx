@@ -659,10 +659,12 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
                 return (
                   <tr className="calendar-builder-own-special-row" key={`special-${row.specialDate.key}`}>
                     <td className="calendar-builder-own-special-line" colSpan={3}>
-                      <span className="calendar-builder-special-date-label">
-                        {formatSpecialDateDate(row.specialDate.date, isEnglish)}
-                      </span>
-                      {renderSpecialDateItem(row.specialDate, placements[row.specialDate.key] || null)}
+                      <div className="calendar-builder-own-special-content">
+                        <span className="calendar-builder-special-date-label">
+                          {formatSpecialDateDate(row.specialDate.date, isEnglish)}
+                        </span>
+                        {renderSpecialDateItem(row.specialDate, placements[row.specialDate.key] || null)}
+                      </div>
                     </td>
                   </tr>
                 );
