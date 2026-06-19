@@ -191,18 +191,18 @@ a {
 .calendar-builder-linear th:first-child,
 .calendar-builder-linear td:first-child {
   text-align: center;
-  width: 8%;
+  width: 7%;
 }
 
 .calendar-builder-linear th:nth-child(2),
 .calendar-builder-linear td:nth-child(2) {
   text-align: center;
-  width: 8%;
+  width: 7%;
 }
 
 .calendar-builder-linear th:nth-child(3),
 .calendar-builder-linear td:nth-child(3) {
-  width: 84%;
+  width: 86%;
 }
 
 .calendar-builder-linear th:nth-child(3) {
@@ -210,12 +210,13 @@ a {
 }
 
 .calendar-builder-linear tbody td:first-child {
-  padding-left: 2px;
+  padding-left: 0;
+  padding-right: 0;
   text-align: left;
 }
 
 .calendar-builder-linear tbody td:nth-child(2) {
-  padding-left: 4px;
+  padding-left: 2px;
   text-align: left;
 }
 
@@ -522,7 +523,23 @@ a {
 }
 
 .calendar-builder-own-special-row .calendar-builder-special-item {
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
   justify-content: center;
+  max-width: 100%;
+  width: auto;
+}
+
+.calendar-builder-own-special-row .calendar-builder-special-item > span:first-child {
+  flex: 0 1 auto;
+  overflow: visible;
+  text-align: center;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.calendar-builder-own-special-row .calendar-builder-special-actions {
+  flex-wrap: nowrap;
 }
 
 .calendar-builder-special-date-label {
