@@ -38,6 +38,7 @@ type CustomCalendarItem = {
   align?: "right";
   fellowship?: FellowshipName;
   id: string;
+  newLine?: boolean;
   sundayDate: string;
   text: string;
   kind?: PresetKind | "custom";
@@ -456,6 +457,14 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
     );
   }
 
+  function toggleCustomItemNewLine(id: string) {
+    setCustomItems((current) =>
+      current.map((item) =>
+        item.id === id ? { ...item, newLine: !item.newLine } : item,
+      ),
+    );
+  }
+
   function setSpecialDateMode(key: string, mode: "own" | "previous" | "next") {
     const specialDate = annualCalendar.specialDates.find((current) => current.key === key);
     if (!specialDate?.date) {
@@ -514,7 +523,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
   function toggleSpecialDateRightAlignment(key: string) {
     setSpecialAlignments((current) => ({
       ...current,
-      [key]: !current[key],
+      [key]: current[key] === false,
     }));
   }
 
@@ -769,6 +778,16 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
                                 {isEnglish ? "Right" : "靠右"}
                               </button>
                               <button
+                                aria-pressed={Boolean(item.newLine)}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  toggleCustomItemNewLine(item.id);
+                                }}
+                                type="button"
+                              >
+                                {isEnglish ? "New line" : "下一行"}
+                              </button>
+                              <button
                                 disabled={!canMoveCalendarItem(customItems, item, -1)}
                                 onClick={(event) => {
                                   event.stopPropagation();
@@ -919,14 +938,14 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
 
     return (
       <div
-        className={`calendar-builder-special-item${specialAlignments[specialDate.key] ? " is-right" : ""}`}
+        className={`calendar-builder-special-item${specialAlignments[specialDate.key] !== false ? " is-right" : ""}`}
         key={specialDate.key}
         onClick={(event) => event.stopPropagation()}
       >
         <span>{formatSpecialDateLabel(specialDate, placedSundayDate, isEnglish)}</span>
         {!readOnly ? <span className="calendar-builder-special-actions print:hidden">
           <button
-            aria-pressed={Boolean(specialAlignments[specialDate.key])}
+            aria-pressed={specialAlignments[specialDate.key] !== false}
             onClick={() => toggleSpecialDateRightAlignment(specialDate.key)}
             type="button"
           >
@@ -1276,19 +1295,22 @@ function buildPreviewHtml({
         const ordinaryItems = sortedItems.filter((item) => !isPresetItem(item, "joint_service"));
         const customItems = ordinaryItems
           .filter((item) => item.align !== "right")
-          .map((item) => `<span class="preview-calendar-item">${escapeHtml(calendarItemText(item))}</span>`)
+          .map(
+            (item) =>
+              `<span class="preview-calendar-item${item.newLine ? " starts-new-line" : ""}">${escapeHtml(calendarItemText(item))}</span>`,
+          )
           .join("  ");
         const rightAlignedItems = ordinaryItems
           .filter((item) => item.align === "right")
           .map((item) => calendarItemText(item));
         const placedSpecialDates = specialDatesBySunday.get(row.sunday.date) || [];
         const leftSpecialItems = placedSpecialDates
-          .filter((specialDate) => !specialAlignments[specialDate.key])
+          .filter((specialDate) => specialAlignments[specialDate.key] === false)
           .map((specialDate) =>
             formatSpecialDateLabel(specialDate, placements[specialDate.key] || null, isEnglish),
           );
         const rightSpecialItems = placedSpecialDates
-          .filter((specialDate) => specialAlignments[specialDate.key])
+          .filter((specialDate) => specialAlignments[specialDate.key] !== false)
           .map((specialDate) =>
             formatSpecialDateLabel(specialDate, placements[specialDate.key] || null, isEnglish),
           );
@@ -1301,7 +1323,7 @@ function buildPreviewHtml({
           { html: `<div class="preview-calendar-items">${leftColumnItems}</div>` },
           {
             html: `<div class="preview-right-items">${rightColumnItems
-              .map((item) => `<div>${escapeHtml(item)}</div>`)
+              .map((item) => `<div><span>${escapeHtml(item)}</span></div>`)
               .join("")}</div>`,
           },
         ], isMonthStart ? "month-start" : "");
@@ -1435,6 +1457,7 @@ function buildPreviewHtml({
     tbody td:nth-child(1) { padding-left: 2px; text-align: left; }
     tbody td:nth-child(2) { padding-left: 4px; text-align: left; }
     tbody td:nth-child(3) { white-space: pre-wrap; }
+    .preview-calendar-item.starts-new-line { display: block; }
     tbody td:nth-child(4) {
       min-width: 0;
       overflow-wrap: anywhere;
@@ -1449,12 +1472,17 @@ function buildPreviewHtml({
       width: 100%;
     }
     .preview-right-items > div {
-      max-width: 100%;
-      overflow-wrap: anywhere;
+      min-height: 1.25em;
+      position: relative;
       text-align: right;
-      white-space: normal;
       width: 100%;
-      word-break: break-word;
+    }
+    .preview-right-items > div > span {
+      position: absolute;
+      right: 0;
+      top: 0;
+      white-space: nowrap;
+      width: max-content;
     }
     .own-special-row td {
       text-align: center !important;
@@ -1546,6 +1574,16 @@ function buildPreviewHtml({
     function exportWord() {
       const clone = document.documentElement.cloneNode(true);
       clone.querySelectorAll(".actions, script").forEach((element) => element.remove());
+      clone.querySelector("body").classList.add("word-export");
+      const wordStyle = document.createElement("style");
+      wordStyle.textContent =
+        ".word-export { background: white; padding: 0; }" +
+        ".word-export .sheet { border: 0; border-radius: 0; margin: 0; max-width: 8.5in; page-break-after: always; }" +
+        ".word-export .sheet:last-child { page-break-after: auto; }" +
+        ".word-export .preview-right-items { display: block; }" +
+        ".word-export .preview-right-items > div { min-height: 1.25em; position: static; text-align: right; }" +
+        ".word-export .preview-right-items > div > span { position: static; white-space: nowrap; }";
+      clone.querySelector("head").appendChild(wordStyle);
       const wordHtml = "<!doctype html>" + clone.outerHTML;
       const blob = new Blob([wordHtml], { type: "application/msword;charset=utf-8" });
       saveBlob(blob, exportBaseName + ".doc");

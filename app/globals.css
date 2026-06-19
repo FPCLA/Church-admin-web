@@ -386,7 +386,7 @@ a {
 
 .calendar-builder-special-item {
   flex-wrap: wrap;
-  justify-content: flex-start;
+  justify-content: flex-end;
   max-width: 100%;
   min-width: 0;
   white-space: normal;
@@ -396,16 +396,16 @@ a {
 .calendar-builder-special-item > span:first-child {
   flex: 1 1 100%;
   min-width: 0;
-  overflow-wrap: anywhere;
-  text-align: left;
-  white-space: normal;
-  word-break: break-word;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.calendar-builder-special-item.is-right,
-.calendar-builder-special-item.is-right > span:first-child {
-  justify-content: flex-end;
-  text-align: right;
+.calendar-builder-special-item:not(.is-right),
+.calendar-builder-special-item:not(.is-right) > span:first-child {
+  justify-content: flex-start;
+  text-align: left;
 }
 
 .calendar-builder-special-item .calendar-builder-special-actions {
