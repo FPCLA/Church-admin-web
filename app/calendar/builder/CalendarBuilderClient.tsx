@@ -23,6 +23,7 @@ type CalendarBuilderClientProps = {
 
 type SpecialPlacement = string | null;
 type PlacementState = Record<string, SpecialPlacement>;
+type SpecialAlignmentState = Record<string, boolean>;
 type DraftState = Record<string, string>;
 type DraftFellowshipState = Record<string, FellowshipName | "">;
 type PresetKind = "joint_service" | "communion";
@@ -91,6 +92,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
     { id: "elder-1", months: [], name: "" },
   ]);
   const [placements, setPlacements] = useState<PlacementState>(() => initialPlacements(annualCalendar));
+  const [specialAlignments, setSpecialAlignments] = useState<SpecialAlignmentState>({});
   const [theme, setTheme] = useState<CalendarTheme>(emptyTheme);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>("");
@@ -98,6 +100,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
   const editorRef = useRef<HTMLDivElement | null>(null);
   const customItemsStorageKey = `calendar-builder-custom-items-${annualCalendar.year}`;
   const placementStorageKey = `calendar-builder-placements-${annualCalendar.year}`;
+  const specialAlignmentStorageKey = `calendar-builder-special-alignments-${annualCalendar.year}`;
   const annualDetailsStorageKey = `calendar-builder-annual-details-${annualCalendar.year}`;
 
   useEffect(() => {
@@ -108,6 +111,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
       setEditingItemId(null);
       setCustomItems(readStorage<CustomCalendarItem[]>(customItemsStorageKey, []));
       setPlacements(readStorage<PlacementState>(placementStorageKey, initialPlacements(annualCalendar)));
+      setSpecialAlignments(readStorage<SpecialAlignmentState>(specialAlignmentStorageKey, {}));
       const annualDetails = readStorage<AnnualDetailsState>(annualDetailsStorageKey, {
         elders: [{ id: "elder-1", months: [], name: "" }],
         theme: emptyTheme,
@@ -119,7 +123,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
     }, 0);
 
     return () => window.clearTimeout(timeout);
-  }, [annualCalendar, annualDetailsStorageKey, customItemsStorageKey, placementStorageKey]);
+  }, [annualCalendar, annualDetailsStorageKey, customItemsStorageKey, placementStorageKey, specialAlignmentStorageKey]);
 
   useEffect(() => {
     if (!isStorageLoaded) {
@@ -136,6 +140,14 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
 
     window.localStorage.setItem(placementStorageKey, JSON.stringify(placements));
   }, [isStorageLoaded, placementStorageKey, placements]);
+
+  useEffect(() => {
+    if (!isStorageLoaded) {
+      return;
+    }
+
+    window.localStorage.setItem(specialAlignmentStorageKey, JSON.stringify(specialAlignments));
+  }, [isStorageLoaded, specialAlignmentStorageKey, specialAlignments]);
 
   useEffect(() => {
     if (!isStorageLoaded) {
@@ -499,10 +511,18 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
     });
   }
 
+  function toggleSpecialDateRightAlignment(key: string) {
+    setSpecialAlignments((current) => ({
+      ...current,
+      [key]: !current[key],
+    }));
+  }
+
   function saveCalendar() {
     const nextSavedAt = new Date().toLocaleString(isEnglish ? "en-US" : "zh-TW");
     window.localStorage.setItem(customItemsStorageKey, JSON.stringify(customItems));
     window.localStorage.setItem(placementStorageKey, JSON.stringify(placements));
+    window.localStorage.setItem(specialAlignmentStorageKey, JSON.stringify(specialAlignments));
     window.localStorage.setItem(annualDetailsStorageKey, JSON.stringify({ elders, theme }));
     window.localStorage.setItem(saveTimeStorageKey(annualCalendar.year), nextSavedAt);
     setSavedAt(nextSavedAt);
@@ -526,6 +546,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
         elders,
         isEnglish,
         placements,
+        specialAlignments,
         specialDatesBySunday,
         theme,
       }),
@@ -549,6 +570,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
           elders,
           isEnglish,
           placements,
+          specialAlignments,
           specialDatesBySunday,
           theme,
         })}
@@ -613,7 +635,6 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
               <th>{isEnglish ? "Month" : "月"}</th>
               <th>{isEnglish ? "Sunday" : "主日"}</th>
               <th>{isEnglish ? "Church calendar" : "教會行事"}</th>
-              <th>{readOnly ? "" : isEnglish ? "Special dates / holidays" : "特殊日子 / 節日"}</th>
             </tr>
           </thead>
           <tbody>
@@ -628,7 +649,7 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
               if (row.type === "special") {
                 return (
                   <tr className="calendar-builder-own-special-row" key={`special-${row.specialDate.key}`}>
-                    <td className="calendar-builder-own-special-line" colSpan={4}>
+                    <td className="calendar-builder-own-special-line" colSpan={3}>
                       <span className="calendar-builder-special-date-label">
                         {formatSpecialDateDate(row.specialDate.date, isEnglish)}
                       </span>
@@ -811,6 +832,11 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
                         </div>
                       ))}
                     </div>
+                    <div className="calendar-builder-special-items">
+                      {rowSpecialDates.map((specialDate) =>
+                        renderSpecialDateItem(specialDate, placements[specialDate.key] || null),
+                      )}
+                    </div>
                     {isEditing ? (
                       <div className="calendar-builder-note-editor" ref={editorRef}>
                         <select
@@ -863,11 +889,6 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
                       </button>
                     ) : null}
                   </td>
-                  <td className="calendar-builder-special-cell">
-                    {rowSpecialDates.map((specialDate) =>
-                      renderSpecialDateItem(specialDate, placements[specialDate.key] || null),
-                    )}
-                  </td>
                 </tr>
               );
             })}
@@ -897,9 +918,20 @@ export function CalendarBuilderClient({ annualCalendar, isEnglish, readOnly = fa
     const isNonSunday = isNonSundaySpecialDate(specialDate);
 
     return (
-      <div className="calendar-builder-special-item" key={specialDate.key}>
+      <div
+        className={`calendar-builder-special-item${specialAlignments[specialDate.key] ? " is-right" : ""}`}
+        key={specialDate.key}
+        onClick={(event) => event.stopPropagation()}
+      >
         <span>{formatSpecialDateLabel(specialDate, placedSundayDate, isEnglish)}</span>
         {!readOnly ? <span className="calendar-builder-special-actions print:hidden">
+          <button
+            aria-pressed={Boolean(specialAlignments[specialDate.key])}
+            onClick={() => toggleSpecialDateRightAlignment(specialDate.key)}
+            type="button"
+          >
+            {isEnglish ? "Right" : "靠右"}
+          </button>
           {isNonSunday ? (
             <button
               aria-pressed={placedOnOwnRow}
@@ -1206,6 +1238,7 @@ function buildPreviewHtml({
   elders,
   isEnglish,
   placements,
+  specialAlignments,
   specialDatesBySunday,
   theme,
 }: {
@@ -1215,6 +1248,7 @@ function buildPreviewHtml({
   elders: ElderAssignment[];
   isEnglish: boolean;
   placements: PlacementState;
+  specialAlignments: SpecialAlignmentState;
   specialDatesBySunday: Map<string, CalendarSpecialDate[]>;
   theme: CalendarTheme;
 }) {
@@ -1247,15 +1281,24 @@ function buildPreviewHtml({
         const rightAlignedItems = ordinaryItems
           .filter((item) => item.align === "right")
           .map((item) => calendarItemText(item));
-        const specialItems = (specialDatesBySunday.get(row.sunday.date) || []).map((specialDate) =>
-          formatSpecialDateLabel(specialDate, placements[specialDate.key] || null, isEnglish),
-        );
-        const rightColumnItems = [...rightAlignedItems, ...specialItems];
+        const placedSpecialDates = specialDatesBySunday.get(row.sunday.date) || [];
+        const leftSpecialItems = placedSpecialDates
+          .filter((specialDate) => !specialAlignments[specialDate.key])
+          .map((specialDate) =>
+            formatSpecialDateLabel(specialDate, placements[specialDate.key] || null, isEnglish),
+          );
+        const rightSpecialItems = placedSpecialDates
+          .filter((specialDate) => specialAlignments[specialDate.key])
+          .map((specialDate) =>
+            formatSpecialDateLabel(specialDate, placements[specialDate.key] || null, isEnglish),
+          );
+        const leftColumnItems = [customItems, ...leftSpecialItems.map(escapeHtml)].filter(Boolean).join("  ");
+        const rightColumnItems = [...rightAlignedItems, ...rightSpecialItems];
 
         return tableRow([
           month,
           `${formatSundayDay(row.sunday.date, isEnglish)}${hasJointService ? "*" : ""}`,
-          { html: `<div class="preview-calendar-items">${customItems}</div>` },
+          { html: `<div class="preview-calendar-items">${leftColumnItems}</div>` },
           {
             html: `<div class="preview-right-items">${rightColumnItems
               .map((item) => `<div>${escapeHtml(item)}</div>`)

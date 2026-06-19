@@ -202,21 +202,11 @@ a {
 
 .calendar-builder-linear th:nth-child(3),
 .calendar-builder-linear td:nth-child(3) {
-  width: 66%;
+  width: 84%;
 }
 
 .calendar-builder-linear th:nth-child(3) {
   text-align: center;
-}
-
-.calendar-builder-linear th:nth-child(4),
-.calendar-builder-linear td:nth-child(4) {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  text-align: right;
-  white-space: normal;
-  width: 18%;
-  word-break: break-word;
 }
 
 .calendar-builder-linear tbody td:first-child {
@@ -377,16 +367,13 @@ a {
 }
 
 .calendar-builder-custom-items,
-.calendar-builder-special-cell {
+.calendar-builder-special-items {
   display: grid;
   gap: 4px;
 }
 
-.calendar-builder-special-cell {
-  justify-items: end;
-  max-width: 100%;
-  min-width: 0;
-  overflow: hidden;
+.calendar-builder-special-items {
+  margin-top: 4px;
 }
 
 .calendar-builder-custom-item,
@@ -399,7 +386,7 @@ a {
 
 .calendar-builder-special-item {
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
   max-width: 100%;
   min-width: 0;
   white-space: normal;
@@ -410,9 +397,15 @@ a {
   flex: 1 1 100%;
   min-width: 0;
   overflow-wrap: anywhere;
-  text-align: right;
+  text-align: left;
   white-space: normal;
   word-break: break-word;
+}
+
+.calendar-builder-special-item.is-right,
+.calendar-builder-special-item.is-right > span:first-child {
+  justify-content: flex-end;
+  text-align: right;
 }
 
 .calendar-builder-special-item .calendar-builder-special-actions {
