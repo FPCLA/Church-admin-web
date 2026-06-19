@@ -1441,10 +1441,10 @@ function buildPreviewHtml({
     th:nth-child(1), td:nth-child(1), th:nth-child(2), td:nth-child(2) {
       text-align: center;
     }
-    th:nth-child(1), td:nth-child(1) { width: 7%; }
-    th:nth-child(2), td:nth-child(2) { width: 7%; }
+    th:nth-child(1), td:nth-child(1) { width: 6%; }
+    th:nth-child(2), td:nth-child(2) { width: 6%; }
     th:nth-child(3), td:nth-child(3) {
-      width: 68%;
+      width: 70%;
     }
     th:nth-child(3) { text-align: center; }
     th:nth-child(4), td:nth-child(4) {
@@ -1455,7 +1455,7 @@ function buildPreviewHtml({
     }
     th:nth-child(1), td:nth-child(1) { font-size: 12pt; white-space: pre; }
     tbody td:nth-child(1) { padding-left: 0; padding-right: 0; text-align: left; }
-    tbody td:nth-child(2) { padding-left: 2px; text-align: left; }
+    tbody td:nth-child(2) { padding-left: 0; text-align: left; }
     tbody td:nth-child(3) { white-space: pre-wrap; }
     .preview-calendar-item.starts-new-line { display: block; }
     tbody td:nth-child(4) {
