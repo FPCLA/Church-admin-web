@@ -518,6 +518,8 @@ a {
   display: flex;
   gap: 8px;
   justify-content: center;
+  min-height: 34px;
+  position: relative;
   text-align: center;
   white-space: nowrap;
 }
@@ -540,6 +542,10 @@ a {
 
 .calendar-builder-own-special-row .calendar-builder-special-actions {
   flex-wrap: nowrap;
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .calendar-builder-special-date-label {
