@@ -1340,6 +1340,12 @@ function buildPreviewHtml({
       ${theme.contentEn ? `<p><strong>Theme:</strong> ${escapeHtml(theme.contentEn)}${themeReference(theme, true) ? ` (${escapeHtml(themeReference(theme, true))})` : ""}</p>` : ""}
     </header>
     <table>
+      <colgroup>
+        <col style="width: 6%" />
+        <col style="width: 6%" />
+        <col style="width: 70%" />
+        <col style="width: 18%" />
+      </colgroup>
       <tbody>${rows}</tbody>
     </table>
     <footer class="footnote">
@@ -1485,10 +1491,11 @@ function buildPreviewHtml({
       width: max-content;
     }
     .own-special-row td {
+      overflow: hidden;
       text-align: center !important;
-      overflow-wrap: anywhere;
-      white-space: normal;
-      word-break: break-word;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      word-break: normal;
     }
     .month-start td {
       border-top: 3px double #334155;
