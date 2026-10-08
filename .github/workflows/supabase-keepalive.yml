@@ -1,0 +1,41 @@
+name: Supabase database keepalive
+
+on:
+  schedule:
+    # Three read-only database queries per day (UTC).
+    - cron: "23 1,9,17 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  query-database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Run a read-only Supabase query
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          : "${SUPABASE_URL:?Add the SUPABASE_URL repository variable.}"
+          : "${SUPABASE_PUBLISHABLE_KEY:?Add the SUPABASE_PUBLISHABLE_KEY repository secret.}"
+
+          # Supabase's Row Level Security protects profiles. The anon role
+          # cannot read these rows, but the SELECT still reaches Postgres.
+          # No data, credentials, or full response bodies are logged.
+          status="$(curl --silent --show-error --retry 2 --retry-delay 5 \
+            --connect-timeout 10 --max-time 30 \
+            --output /dev/null --write-out '%{http_code}' \
+            --header "apikey: ${SUPABASE_PUBLISHABLE_KEY}" \
+            --header "accept: application/json" \
+            "${SUPABASE_URL%/}/rest/v1/profiles?select=id&limit=1")"
+
+          if [ "$status" != "200" ]; then
+            echo "Supabase database request failed (HTTP $status)."
+            exit 1
+          fi
+
+          echo "Supabase database SELECT completed (HTTP 200)."
