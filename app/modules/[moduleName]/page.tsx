@@ -21,6 +21,8 @@ export default async function ModuleComingSoonPage({ params }: PageProps) {
     redirect("/dashboard?error=unauthorized");
   }
 
+  if (moduleName === "calendar_events") redirect("/calendar");
+
   return (
     <main className="min-h-screen bg-slate-50">
       <header className="border-b border-slate-200 bg-white"><div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4"><div><p className="text-sm font-medium text-sky-700">{t("app.name")}</p><h1 className="text-2xl font-semibold text-slate-950">{t(`modules.${moduleName}`)}</h1></div><div className="flex items-center gap-3"><LanguageSwitcher initialLocale={profile.language_preference} /><SignOutButton label={t("common.signOut")} /></div></div></header>
@@ -28,3 +30,4 @@ export default async function ModuleComingSoonPage({ params }: PageProps) {
     </main>
   );
 }
+
