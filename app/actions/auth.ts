@@ -8,6 +8,7 @@ import { getAppUrl } from "@/lib/env.server";
 
 export type LoginActionState = {
   error?: string;
+  bridgeLoginComplete?: boolean;
 };
 
 export type SetPasswordActionState = {
@@ -20,6 +21,17 @@ export type ForgotPasswordActionState = {
 };
 
 export async function signInWithPassword(
+  previousState: LoginActionState,
+  formData: FormData,
+): Promise<LoginActionState> {
+  const result = await signInForBridge(previousState, formData);
+  if (result.error) return result;
+  redirect("/dashboard");
+}
+
+// The same existing login checks and audit writes; fixed handoff, no return URL.
+// This marker is a UI trigger only, never permission or verified-user evidence.
+export async function signInForBridge(
   _previousState: LoginActionState,
   formData: FormData,
 ): Promise<LoginActionState> {
@@ -87,7 +99,7 @@ export async function signInWithPassword(
     changedBy: user.id,
   });
 
-  redirect("/dashboard");
+  return { bridgeLoginComplete: true };
 }
 
 export async function signOut() {
@@ -190,3 +202,4 @@ export async function setPassword(
 
   redirect("/dashboard");
 }
+

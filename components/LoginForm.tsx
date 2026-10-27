@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
-import { signInWithPassword, type LoginActionState } from "@/app/actions/auth";
+import { useActionState, useEffect, useRef } from "react";
+import { signInWithPassword, signInForBridge, type LoginActionState } from "@/app/actions/auth";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 
 const initialState: LoginActionState = {};
@@ -10,19 +10,29 @@ const initialState: LoginActionState = {};
 export function LoginForm({
   initialLocale,
   initialError,
+  bridgeLogin = false,
 }: {
   initialLocale?: string | null;
   initialError?: string | null;
+  bridgeLogin?: boolean;
 }) {
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    if (bridgeLogin && formRef.current) formRef.current.dataset.fpclaBridgeHydrated = "true";
+  }, [bridgeLogin]);
   const [state, formAction, isPending] = useActionState(
-    signInWithPassword,
+    bridgeLogin ? signInForBridge : signInWithPassword,
     initialState,
   );
   const { t } = useTranslation(initialLocale);
   const errorKey = state.error || (initialError && `login.errors.${initialError}`);
 
+  if (bridgeLogin && state.bridgeLoginComplete === true) {
+    return <p role="status" data-fpcla-bridge-login="complete">Login completed. Continue in the FPCLA window. / 登入完成，請回到 FPCLA 視窗繼續。</p>;
+  }
+
   return (
-    <form action={formAction} className="space-y-5">
+    <form ref={formRef} action={formAction} className="space-y-5">
       <div className="space-y-2">
         <label className="block text-sm font-medium text-slate-700" htmlFor="email">
           {t("common.email")}
@@ -74,3 +84,4 @@ export function LoginForm({
     </form>
   );
 }
+
