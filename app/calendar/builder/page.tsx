@@ -7,6 +7,7 @@ import { phase3Text } from "@/lib/phase3/config";
 import { requireModuleContext } from "@/lib/calendar-access";
 import { getAnnualCalendar } from "@/lib/annual-calendars-data";
 import { hasRecordPermission } from "@/lib/permissions";
+import { isDriveAdministrator } from "@/lib/google-drive/admin-access";
 
 type PageProps = {
   searchParams?: Promise<{ rebuild?: string; year?: string }>;
@@ -23,6 +24,8 @@ export default async function CalendarBuilderPage({ searchParams }: PageProps) {
   const canEdit = savedCalendar
     ? await hasRecordPermission(user.id, "calendar_events", savedCalendar.id, "edit")
     : permissions.create;
+  const canExportDrive = process.env.CALENDAR_DRIVE_EXPORT_ENABLED === "true" &&
+    permissions.export && await isDriveAdministrator(user.id);
   const isEnglish = profile.language_preference === "en";
   const yearOptions = Array.from({ length: 9 }, (_, index) => currentYear - 2 + index);
 
@@ -49,6 +52,7 @@ export default async function CalendarBuilderPage({ searchParams }: PageProps) {
       <CalendarBuilderClient
         draftOwnerId={user.id}
         annualCalendar={annualCalendar}
+        canExportDrive={canExportDrive}
         initialCalendar={savedCalendar}
         isEnglish={isEnglish}
         key={selectedYear}
@@ -67,4 +71,3 @@ function normalizeYear(rawYear: string | undefined, fallback: number) {
 
   return year;
 }
-

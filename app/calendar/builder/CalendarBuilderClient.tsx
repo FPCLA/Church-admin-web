@@ -31,6 +31,7 @@ type AnnualCalendar = {
 type CalendarBuilderClientProps = {
   draftOwnerId: string;
   annualCalendar: AnnualCalendar;
+  canExportDrive?: boolean;
   initialCalendar: AnnualCalendarRecord | null;
   isEnglish: boolean;
   readOnly?: boolean;
@@ -88,6 +89,7 @@ const weekdayEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export function CalendarBuilderClient({
   draftOwnerId,
   annualCalendar,
+  canExportDrive = false,
   initialCalendar,
   isEnglish,
   readOnly = false,
@@ -110,6 +112,7 @@ export function CalendarBuilderClient({
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isExportingDrive, setIsExportingDrive] = useState(false);
   const [centralVersion, setCentralVersion] = useState<number | null>(initialCalendar?.version ?? null);
   const savedFingerprintRef = useRef<string | null>(
     initialCalendar ? annualCalendarDraftFingerprint(contentFromRecord(initialCalendar)) : null,
@@ -671,6 +674,51 @@ export function CalendarBuilderClient({
     }
   }
 
+  async function exportToDrive() {
+    const current = currentContent(customItems, placements, specialAlignments, elders, theme);
+    if (!centralVersion || !savedFingerprintRef.current ||
+        annualCalendarDraftFingerprint(current) !== savedFingerprintRef.current || editingItemId ||
+        Object.values(drafts).some((draft) => draft.trim())) {
+      setStatusMessage(isEnglish ? "Finish editing and save this calendar before exporting to Drive." : "請先完成編輯並儲存行事曆，再匯出到 Google Drive。");
+      return;
+    }
+    // Retain the request ID until a success is received. Retrying an uncertain
+    // response from this browser reuses it instead of creating another file.
+    const requestKey = `calendar-drive-export-${draftOwnerId}-${annualCalendar.year}-${centralVersion}`;
+    let requestId: string;
+    try {
+      requestId = window.localStorage.getItem(requestKey) || window.crypto.randomUUID();
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(requestId)) throw new Error("invalid request id");
+      window.localStorage.setItem(requestKey, requestId);
+      if (window.localStorage.getItem(requestKey) !== requestId) throw new Error("request id not retained");
+    } catch {
+      setStatusMessage(isEnglish ? "Unable to safely prepare the export. Check browser storage and try again." : "無法安全準備匯出，請檢查瀏覽器儲存設定後再試。");
+      return;
+    }
+    setIsExportingDrive(true);
+    setStatusMessage(isEnglish ? "Saving a Word copy to Google Drive..." : "正在將 Word 副本儲存到 Google Drive…");
+    try {
+      const response = await fetch("/api/calendar/export-drive", {method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({year:annualCalendar.year, version:centralVersion, requestId})});
+      const result = await response.json();
+      if (response.ok && result.code === "saved") {
+        try {
+          // A second tab may have replaced this key while the request was in flight.
+          if (window.localStorage.getItem(requestKey) === requestId) window.localStorage.removeItem(requestKey);
+        } catch { /* Retaining the ID remains safe. */ }
+        setStatusMessage(isEnglish ? "The saved calendar was exported to Google Drive." : "已將儲存的行事曆匯出到 Google Drive。");
+      } else if (result.code === "calendar_changed") {
+        setStatusMessage(isEnglish ? "A newer calendar exists. Reload and review it before exporting." : "已有較新的行事曆版本，請重新載入並確認後再匯出。");
+      } else if (result.code === "needs_review" || result.code === "export_unresolved") {
+        setStatusMessage(isEnglish ? "The export needs review. Check the Drive folder before trying again." : "匯出結果需要確認，請先檢查 Drive 資料夾，再處理後續操作。");
+      } else {
+        setStatusMessage(isEnglish ? "Unable to export to Drive. The saved calendar remains available." : "無法匯出到 Drive；網站中已儲存的行事曆仍在。");
+      }
+    } catch {
+      setStatusMessage(isEnglish ? "The export result is uncertain. Check the Drive folder before trying again." : "匯出結果未能確認，請先檢查 Drive 資料夾，再處理後續操作。");
+    } finally { setIsExportingDrive(false); }
+  }
+
   function openPreview() {
     const previewWindow = window.open("", `fpcla-calendar-${annualCalendar.year}`, "width=1000,height=800");
     if (!previewWindow) {
@@ -739,15 +787,27 @@ export function CalendarBuilderClient({
         <div className="calendar-builder-save-panel">
           <button
             className="calendar-builder-primary-action"
-            disabled={isSaving}
+            disabled={isSaving || isExportingDrive}
             onClick={saveCalendar}
             type="button"
           >
             {isSaving ? (isEnglish ? "Saving..." : "儲存中…") : isEnglish ? "Save" : "儲存"}
           </button>
+          {canExportDrive && (
+            <button
+              className="calendar-builder-primary-action"
+              disabled={isSaving || isExportingDrive}
+              onClick={exportToDrive}
+              type="button"
+            >
+              {isExportingDrive
+                ? (isEnglish ? "Exporting..." : "匯出中…")
+                : (isEnglish ? "Save to Google Drive" : "儲存到 Google Drive")}
+            </button>
+          )}
           <button
             className="calendar-builder-primary-action"
-            disabled={isSaving}
+            disabled={isSaving || isExportingDrive}
             onClick={openPreview}
             type="button"
           >
@@ -2013,4 +2073,3 @@ function escapeHtml(value: string) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
-
